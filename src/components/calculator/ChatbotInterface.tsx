@@ -40,6 +40,13 @@ export const ChatbotInterface = ({ onComplete, initialData }: ChatbotInterfacePr
     }
   }, [messages]);
 
+  const sanitizeAssistantText = (msg: string) => {
+    return msg
+      .replace(/\bannual\s+gross\s+revenue\b/gi, "annual GMV attempts")
+      .replace(/\bgross\s+revenue\b/gi, "Annual GMV Attempts")
+      .replace(/\brevenue\b/gi, "GMV");
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -68,7 +75,8 @@ export const ChatbotInterface = ({ onComplete, initialData }: ChatbotInterfacePr
         }
       }
 
-      setMessages((prev) => [...prev, { role: "assistant", content: parsedData.message }]);
+      const sanitizedMsg = sanitizeAssistantText(parsedData.message);
+      setMessages((prev) => [...prev, { role: "assistant", content: sanitizedMsg }]);
 
       if (parsedData.updatedData) {
         setCollectedData(parsedData.updatedData);

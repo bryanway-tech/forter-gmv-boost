@@ -27,12 +27,12 @@ FOCUS ONLY ON THESE METRICS (skip customer details like name, industry, reps):
    - Gross Sales Attempts (#) - number of transaction attempts
    - Gross Margin % (if not provided, use 50% default)
    - Fraud Check Timing: Ask "Is your fraud solution pre-authorization or post-authorization?" Accept: "pre-auth", "post-auth", "before", "after", etc.
-   - If pre-auth: Pre-Auth Fraud Approval Rate % (what % of transactions does your fraud system approve?)
+   - If pre-auth: Pre-Auth Fraud Approval Rate %
    - If post-auth: Post-Auth Fraud Approval Rate %
-   - Issuing Bank Decline Rate % (what % of transactions are declined by the bank?) - default 7% if not provided
-   - 3DS Challenge Rate % (what % of transactions require 3DS challenge?)
-   - 3DS Abandonment Rate % (what % of 3DS challenged transactions are abandoned?)
-   - Manual Review Rate % (what % of transactions require manual review?)
+   - Issuing Bank Decline Rate % (default 7%)
+   - 3DS Challenge Rate %
+   - 3DS Abandonment Rate %
+   - Manual Review Rate %
 
 2. EMEA Region (Optional, ask if they have EMEA GMV):
    - Annual GMV Attempts in USD
@@ -64,9 +64,9 @@ FOCUS ONLY ON THESE METRICS (skip customer details like name, industry, reps):
    - Service Chargeback Rate %
    - Service Chargeback AOV in USD (default $158)
 
-Current collected data: ${JSON.stringify(collectedData)}
-
 IMPORTANT RULES:
+- Never ask for or mention "revenue" or "gross revenue". Always use "Annual GMV Attempts (USD)". If the user mentions revenue, clarify that we need total transaction attempts value (Annual GMV Attempts) and ask for that figure.
+- Your first question MUST be exactly: "To start, what is your Annual GMV Attempts in USD for the AMER region?"
 - Ask ONE question at a time
 - Be conversational but direct - focus on fraud metrics only
 - Skip asking about customer name, industry, account reps, etc.
@@ -122,6 +122,14 @@ Do NOT include markdown code blocks or extra text - only pure JSON.`;
         updatedData: collectedData,
         isComplete: false,
       };
+    }
+
+    // Enforce terminology consistency in assistant message
+    if (parsedResponse && typeof parsedResponse.message === "string") {
+      parsedResponse.message = parsedResponse.message
+        .replace(/\bannual\s+gross\s+revenue\b/gi, "annual GMV attempts")
+        .replace(/\bgross\s+revenue\b/gi, "Annual GMV Attempts")
+        .replace(/\brevenue\b/gi, "GMV");
     }
 
     return new Response(JSON.stringify(parsedResponse), {
