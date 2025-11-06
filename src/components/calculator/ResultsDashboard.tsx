@@ -250,7 +250,88 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
     }
 
     setBreakdownData({
-      title: `${region.toUpperCase()} Complete Rate Calculation`,
+      title: `${region.toUpperCase()} Current Complete Rate Calculation`,
+      calculations,
+    });
+    setBreakdownOpen(true);
+  };
+
+  const showForterCompleteRateBreakdown = (region: 'amer' | 'emea' | 'apac') => {
+    const calculations = [];
+    
+    if (region === 'amer') {
+      const bankDeclineRate = data.amerIssuingBankDeclineRate || 7;
+      const currentBankApproval = 1 - bankDeclineRate / 100;
+      const bankUplift = forterKPIs.bankUplift / 100;
+      const futureBankApproval = Math.min(0.99, currentBankApproval + bankUplift);
+      const forterFraudApproval = forterKPIs.fraudApprovalRate / 100;
+      
+      calculations.push(
+        { label: "Current Bank Approval Rate", value: `${(currentBankApproval * 100).toFixed(2)}%` },
+        { label: "Forter Bank Optimization Uplift", value: `${forterKPIs.bankUplift}%` },
+        { 
+          label: "Improved Bank Approval Rate", 
+          value: `${(futureBankApproval * 100).toFixed(2)}%`,
+          formula: `${(currentBankApproval * 100).toFixed(2)}% + ${forterKPIs.bankUplift}% = ${(futureBankApproval * 100).toFixed(2)}%`
+        },
+        { label: "Forter Fraud Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` },
+        {
+          label: "Future Complete Rate with Forter",
+          value: `${metrics.futureAmerCompleteRate.toFixed(2)}%`,
+          formula: `${(futureBankApproval * 100).toFixed(2)}% × ${forterKPIs.fraudApprovalRate}%`,
+          isResult: true,
+        }
+      );
+    } else if (region === 'emea') {
+      const bankDeclineRate = data.emeaIssuingBankDeclineRate || 5;
+      const currentBankApproval = 1 - bankDeclineRate / 100;
+      const bankUplift = forterKPIs.bankUplift / 100;
+      const futureBankApproval = Math.min(0.99, currentBankApproval + bankUplift);
+      const forterFraudApproval = forterKPIs.fraudApprovalRate / 100;
+      
+      calculations.push(
+        { label: "Current Bank Approval Rate", value: `${(currentBankApproval * 100).toFixed(2)}%` },
+        { label: "Forter Bank Optimization Uplift", value: `${forterKPIs.bankUplift}%` },
+        { 
+          label: "Improved Bank Approval Rate", 
+          value: `${(futureBankApproval * 100).toFixed(2)}%`,
+          formula: `${(currentBankApproval * 100).toFixed(2)}% + ${forterKPIs.bankUplift}% = ${(futureBankApproval * 100).toFixed(2)}%`
+        },
+        { label: "Forter Fraud Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` },
+        {
+          label: "Future Complete Rate with Forter",
+          value: `${metrics.futureEmeaCompleteRate.toFixed(2)}%`,
+          formula: `${(futureBankApproval * 100).toFixed(2)}% × ${forterKPIs.fraudApprovalRate}%`,
+          isResult: true,
+        }
+      );
+    } else {
+      const bankDeclineRate = data.apacIssuingBankDeclineRate || 7;
+      const currentBankApproval = 1 - bankDeclineRate / 100;
+      const bankUplift = forterKPIs.bankUplift / 100;
+      const futureBankApproval = Math.min(0.99, currentBankApproval + bankUplift);
+      const forterFraudApproval = forterKPIs.fraudApprovalRate / 100;
+      
+      calculations.push(
+        { label: "Current Bank Approval Rate", value: `${(currentBankApproval * 100).toFixed(2)}%` },
+        { label: "Forter Bank Optimization Uplift", value: `${forterKPIs.bankUplift}%` },
+        { 
+          label: "Improved Bank Approval Rate", 
+          value: `${(futureBankApproval * 100).toFixed(2)}%`,
+          formula: `${(currentBankApproval * 100).toFixed(2)}% + ${forterKPIs.bankUplift}% = ${(futureBankApproval * 100).toFixed(2)}%`
+        },
+        { label: "Forter Fraud Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` },
+        {
+          label: "Future Complete Rate with Forter",
+          value: `${metrics.futureApacCompleteRate.toFixed(2)}%`,
+          formula: `${(futureBankApproval * 100).toFixed(2)}% × ${forterKPIs.fraudApprovalRate}%`,
+          isResult: true,
+        }
+      );
+    }
+
+    setBreakdownData({
+      title: `${region.toUpperCase()} Future Complete Rate with Forter`,
       calculations,
     });
     setBreakdownOpen(true);
@@ -359,8 +440,14 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
                       {formatPercent(metrics.currentAmerCompleteRate)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg">
-                    <span>With Forter</span>
+                  <div 
+                    className="flex justify-between items-center p-4 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors"
+                    onClick={() => showForterCompleteRateBreakdown('amer')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>With Forter</span>
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                    </div>
                     <span className="font-bold text-xl text-primary">
                       {formatPercent(metrics.futureAmerCompleteRate)}
                     </span>
@@ -394,8 +481,14 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
                       {formatPercent(metrics.currentEmeaCompleteRate)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg">
-                    <span>With Forter</span>
+                  <div 
+                    className="flex justify-between items-center p-4 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors"
+                    onClick={() => showForterCompleteRateBreakdown('emea')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>With Forter</span>
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                    </div>
                     <span className="font-bold text-xl text-primary">
                       {formatPercent(metrics.futureEmeaCompleteRate)}
                     </span>
@@ -429,8 +522,14 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
                       {formatPercent(metrics.currentApacCompleteRate)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg">
-                    <span>With Forter</span>
+                  <div 
+                    className="flex justify-between items-center p-4 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors"
+                    onClick={() => showForterCompleteRateBreakdown('apac')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>With Forter</span>
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                    </div>
                     <span className="font-bold text-xl text-primary">
                       {formatPercent(metrics.futureApacCompleteRate)}
                     </span>
