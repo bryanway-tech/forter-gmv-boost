@@ -30,31 +30,71 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
     const totalRevenue = amerRevenue + emeaRevenue + apacRevenue;
 
     // AMER calculations
-    const amerBankApproval = 1 - (data.amerIssuingBankDeclineRate || 7) / 100;
+    const amerBankDeclineRate = (data.amerIssuingBankDeclineRate || 7) / 100;
+    const amerBankApproval = 1 - amerBankDeclineRate;
     const amerFraudApproval =
       data.amerFraudCheckTiming === "pre-auth"
         ? (data.amerPreAuthApprovalRate || 95) / 100
         : (data.amerPostAuthApprovalRate || 98.5) / 100;
-    const currentAmerCompleteRate = amerBankApproval * amerFraudApproval;
-    const futureAmerBankApproval = Math.min(0.99, amerBankApproval + forterKPIs.bankUplift / 100);
-    const futureAmerCompleteRate = futureAmerBankApproval * (forterKPIs.fraudApprovalRate / 100);
+    
+    // Current state with 3DS and manual review impacts
+    const amer3DSRate = (data.amer3DSChallengeRate || 0) / 100;
+    const amerManualReviewRate = (data.amerManualReviewRate || 0) / 100;
+    const currentAmerCompleteRate = amerBankApproval * amerFraudApproval * (1 - amer3DSRate * 0.05) * (1 - amerManualReviewRate * 0.03);
+    
+    // Future state with Forter - fix bank decline calculation per Excel J26
+    const bankDeclineImprovement = forterKPIs.bankDeclineImprovement / 100;
+    const futureAmerBankDeclineRate = amerBankDeclineRate * (1 - bankDeclineImprovement);
+    const futureAmerBankApproval = Math.min(0.99, 1 - futureAmerBankDeclineRate);
+    
+    // Apply 3DS optimization
+    const forter3DSReduction = forterKPIs.threeDSChallengeReduction / 100;
+    const futureAmer3DSRate = amer3DSRate * (1 - forter3DSReduction);
+    const threeDSApprovalImpact = 1 - futureAmer3DSRate * (0.05 - forterKPIs.threeDSApprovalImprovement / 100);
+    
+    // Apply manual review reduction
+    const forterManualReviewReduction = forterKPIs.manualReviewReduction / 100;
+    const futureAmerManualReviewRate = amerManualReviewRate * (1 - forterManualReviewReduction);
+    const manualReviewImpact = 1 - futureAmerManualReviewRate * 0.02;
+    
+    const futureAmerCompleteRate = futureAmerBankApproval * (forterKPIs.fraudApprovalRate / 100) * threeDSApprovalImpact * manualReviewImpact;
 
     // EMEA calculations
-    const emeaBankApproval = 1 - (data.emeaIssuingBankDeclineRate || 5) / 100;
+    const emeaBankDeclineRate = (data.emeaIssuingBankDeclineRate || 5) / 100;
+    const emeaBankApproval = 1 - emeaBankDeclineRate;
     const emeaFraudApproval = (data.emeaPreAuthApprovalRate || 95) / 100;
-    const currentEmeaCompleteRate = emeaBankApproval * emeaFraudApproval;
-    const futureEmeaBankApproval = Math.min(0.99, emeaBankApproval + forterKPIs.bankUplift / 100);
-    const futureEmeaCompleteRate = futureEmeaBankApproval * (forterKPIs.fraudApprovalRate / 100);
+    
+    const emea3DSRate = (data.emea3DSChallengeRate || 0) / 100;
+    const emeaManualReviewRate = (data.emeaManualReviewRate || 0) / 100;
+    const currentEmeaCompleteRate = emeaBankApproval * emeaFraudApproval * (1 - emea3DSRate * 0.05) * (1 - emeaManualReviewRate * 0.03);
+    
+    const futureEmeaBankDeclineRate = emeaBankDeclineRate * (1 - bankDeclineImprovement);
+    const futureEmeaBankApproval = Math.min(0.99, 1 - futureEmeaBankDeclineRate);
+    const futureEmea3DSRate = emea3DSRate * (1 - forter3DSReduction);
+    const emea3DSApprovalImpact = 1 - futureEmea3DSRate * (0.05 - forterKPIs.threeDSApprovalImprovement / 100);
+    const futureEmeaManualReviewRate = emeaManualReviewRate * (1 - forterManualReviewReduction);
+    const emeaManualReviewImpact = 1 - futureEmeaManualReviewRate * 0.02;
+    const futureEmeaCompleteRate = futureEmeaBankApproval * (forterKPIs.fraudApprovalRate / 100) * emea3DSApprovalImpact * emeaManualReviewImpact;
 
     // APAC calculations
-    const apacBankApproval = 1 - (data.apacIssuingBankDeclineRate || 7) / 100;
+    const apacBankDeclineRate = (data.apacIssuingBankDeclineRate || 7) / 100;
+    const apacBankApproval = 1 - apacBankDeclineRate;
     const apacFraudApproval =
       data.apacFraudCheckTiming === "pre-auth"
         ? (data.apacPreAuthApprovalRate || 95) / 100
         : (data.apacPostAuthApprovalRate || 98.5) / 100;
-    const currentApacCompleteRate = apacBankApproval * apacFraudApproval;
-    const futureApacBankApproval = Math.min(0.99, apacBankApproval + forterKPIs.bankUplift / 100);
-    const futureApacCompleteRate = futureApacBankApproval * (forterKPIs.fraudApprovalRate / 100);
+    
+    const apac3DSRate = (data.apac3DSChallengeRate || 0) / 100;
+    const apacManualReviewRate = (data.apacManualReviewRate || 0) / 100;
+    const currentApacCompleteRate = apacBankApproval * apacFraudApproval * (1 - apac3DSRate * 0.05) * (1 - apacManualReviewRate * 0.03);
+    
+    const futureApacBankDeclineRate = apacBankDeclineRate * (1 - bankDeclineImprovement);
+    const futureApacBankApproval = Math.min(0.99, 1 - futureApacBankDeclineRate);
+    const futureApac3DSRate = apac3DSRate * (1 - forter3DSReduction);
+    const apac3DSApprovalImpact = 1 - futureApac3DSRate * (0.05 - forterKPIs.threeDSApprovalImprovement / 100);
+    const futureApacManualReviewRate = apacManualReviewRate * (1 - forterManualReviewReduction);
+    const apacManualReviewImpact = 1 - futureApacManualReviewRate * 0.02;
+    const futureApacCompleteRate = futureApacBankApproval * (forterKPIs.fraudApprovalRate / 100) * apac3DSApprovalImpact * apacManualReviewImpact;
 
     // Calculate GMV uplift
     const amerGMVUplift = amerRevenue * (futureAmerCompleteRate - currentAmerCompleteRate);
@@ -261,73 +301,178 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
     
     if (region === 'amer') {
       const bankDeclineRate = data.amerIssuingBankDeclineRate || 7;
+      const currentBankDeclinePercent = bankDeclineRate;
       const currentBankApproval = 1 - bankDeclineRate / 100;
-      const bankUplift = forterKPIs.bankUplift / 100;
-      const futureBankApproval = Math.min(0.99, currentBankApproval + bankUplift);
+      const bankDeclineImprovement = forterKPIs.bankDeclineImprovement;
+      const improvedBankDeclineRate = bankDeclineRate * (1 - bankDeclineImprovement / 100);
+      const futureBankApproval = Math.min(0.99, 1 - improvedBankDeclineRate / 100);
       const forterFraudApproval = forterKPIs.fraudApprovalRate / 100;
       
+      // 3DS optimization
+      const amer3DSRate = data.amer3DSChallengeRate || 0;
+      const futureAmer3DSRate = amer3DSRate * (1 - forterKPIs.threeDSChallengeReduction / 100);
+      
+      // Manual review optimization
+      const amerManualReviewRate = data.amerManualReviewRate || 0;
+      const futureAmerManualReviewRate = amerManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
+      
       calculations.push(
-        { label: "Current Bank Approval Rate", value: `${(currentBankApproval * 100).toFixed(2)}%` },
-        { label: "Forter Bank Optimization Uplift", value: `${forterKPIs.bankUplift}%` },
+        { label: "Current Bank Decline Rate", value: `${currentBankDeclinePercent}%` },
+        { label: "Forter Bank Decline Improvement", value: `${bankDeclineImprovement}%` },
+        { 
+          label: "Improved Bank Decline Rate", 
+          value: `${improvedBankDeclineRate.toFixed(2)}%`,
+          formula: `${currentBankDeclinePercent}% × (1 - ${bankDeclineImprovement}%)`
+        },
         { 
           label: "Improved Bank Approval Rate", 
           value: `${(futureBankApproval * 100).toFixed(2)}%`,
-          formula: `${(currentBankApproval * 100).toFixed(2)}% + ${forterKPIs.bankUplift}% = ${(futureBankApproval * 100).toFixed(2)}%`
+          formula: `100% - ${improvedBankDeclineRate.toFixed(2)}%`
         },
-        { label: "Forter Fraud Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` },
-        {
-          label: "Future Complete Rate with Forter",
-          value: `${metrics.futureAmerCompleteRate.toFixed(2)}%`,
-          formula: `${(futureBankApproval * 100).toFixed(2)}% × ${forterKPIs.fraudApprovalRate}%`,
-          isResult: true,
-        }
+        { label: "Forter Fraud Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` }
       );
+      
+      if (amer3DSRate > 0) {
+        calculations.push(
+          { label: "Current 3DS Challenge Rate", value: `${amer3DSRate}%` },
+          { 
+            label: "Optimized 3DS Challenge Rate", 
+            value: `${futureAmer3DSRate.toFixed(2)}%`,
+            formula: `${amer3DSRate}% × (1 - ${forterKPIs.threeDSChallengeReduction}%)`
+          }
+        );
+      }
+      
+      if (amerManualReviewRate > 0) {
+        calculations.push(
+          { label: "Current Manual Review Rate", value: `${amerManualReviewRate}%` },
+          { 
+            label: "Optimized Manual Review Rate", 
+            value: `${futureAmerManualReviewRate.toFixed(2)}%`,
+            formula: `${amerManualReviewRate}% × (1 - ${forterKPIs.manualReviewReduction}%)`
+          }
+        );
+      }
+      
+      calculations.push({
+        label: "Future Complete Rate with Forter",
+        value: `${metrics.futureAmerCompleteRate.toFixed(2)}%`,
+        isResult: true,
+      });
     } else if (region === 'emea') {
       const bankDeclineRate = data.emeaIssuingBankDeclineRate || 5;
+      const currentBankDeclinePercent = bankDeclineRate;
       const currentBankApproval = 1 - bankDeclineRate / 100;
-      const bankUplift = forterKPIs.bankUplift / 100;
-      const futureBankApproval = Math.min(0.99, currentBankApproval + bankUplift);
+      const bankDeclineImprovement = forterKPIs.bankDeclineImprovement;
+      const improvedBankDeclineRate = bankDeclineRate * (1 - bankDeclineImprovement / 100);
+      const futureBankApproval = Math.min(0.99, 1 - improvedBankDeclineRate / 100);
       const forterFraudApproval = forterKPIs.fraudApprovalRate / 100;
       
+      const emea3DSRate = data.emea3DSChallengeRate || 0;
+      const futureEmea3DSRate = emea3DSRate * (1 - forterKPIs.threeDSChallengeReduction / 100);
+      const emeaManualReviewRate = data.emeaManualReviewRate || 0;
+      const futureEmeaManualReviewRate = emeaManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
+      
       calculations.push(
-        { label: "Current Bank Approval Rate", value: `${(currentBankApproval * 100).toFixed(2)}%` },
-        { label: "Forter Bank Optimization Uplift", value: `${forterKPIs.bankUplift}%` },
+        { label: "Current Bank Decline Rate", value: `${currentBankDeclinePercent}%` },
+        { label: "Forter Bank Decline Improvement", value: `${bankDeclineImprovement}%` },
+        { 
+          label: "Improved Bank Decline Rate", 
+          value: `${improvedBankDeclineRate.toFixed(2)}%`,
+          formula: `${currentBankDeclinePercent}% × (1 - ${bankDeclineImprovement}%)`
+        },
         { 
           label: "Improved Bank Approval Rate", 
           value: `${(futureBankApproval * 100).toFixed(2)}%`,
-          formula: `${(currentBankApproval * 100).toFixed(2)}% + ${forterKPIs.bankUplift}% = ${(futureBankApproval * 100).toFixed(2)}%`
+          formula: `100% - ${improvedBankDeclineRate.toFixed(2)}%`
         },
-        { label: "Forter Fraud Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` },
-        {
-          label: "Future Complete Rate with Forter",
-          value: `${metrics.futureEmeaCompleteRate.toFixed(2)}%`,
-          formula: `${(futureBankApproval * 100).toFixed(2)}% × ${forterKPIs.fraudApprovalRate}%`,
-          isResult: true,
-        }
+        { label: "Forter Fraud Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` }
       );
+      
+      if (emea3DSRate > 0) {
+        calculations.push(
+          { label: "Current 3DS Challenge Rate", value: `${emea3DSRate}%` },
+          { 
+            label: "Optimized 3DS Challenge Rate", 
+            value: `${futureEmea3DSRate.toFixed(2)}%`,
+            formula: `${emea3DSRate}% × (1 - ${forterKPIs.threeDSChallengeReduction}%)`
+          }
+        );
+      }
+      
+      if (emeaManualReviewRate > 0) {
+        calculations.push(
+          { label: "Current Manual Review Rate", value: `${emeaManualReviewRate}%` },
+          { 
+            label: "Optimized Manual Review Rate", 
+            value: `${futureEmeaManualReviewRate.toFixed(2)}%`,
+            formula: `${emeaManualReviewRate}% × (1 - ${forterKPIs.manualReviewReduction}%)`
+          }
+        );
+      }
+      
+      calculations.push({
+        label: "Future Complete Rate with Forter",
+        value: `${metrics.futureEmeaCompleteRate.toFixed(2)}%`,
+        isResult: true,
+      });
     } else {
       const bankDeclineRate = data.apacIssuingBankDeclineRate || 7;
+      const currentBankDeclinePercent = bankDeclineRate;
       const currentBankApproval = 1 - bankDeclineRate / 100;
-      const bankUplift = forterKPIs.bankUplift / 100;
-      const futureBankApproval = Math.min(0.99, currentBankApproval + bankUplift);
+      const bankDeclineImprovement = forterKPIs.bankDeclineImprovement;
+      const improvedBankDeclineRate = bankDeclineRate * (1 - bankDeclineImprovement / 100);
+      const futureBankApproval = Math.min(0.99, 1 - improvedBankDeclineRate / 100);
       const forterFraudApproval = forterKPIs.fraudApprovalRate / 100;
       
+      const apac3DSRate = data.apac3DSChallengeRate || 0;
+      const futureApac3DSRate = apac3DSRate * (1 - forterKPIs.threeDSChallengeReduction / 100);
+      const apacManualReviewRate = data.apacManualReviewRate || 0;
+      const futureApacManualReviewRate = apacManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
+      
       calculations.push(
-        { label: "Current Bank Approval Rate", value: `${(currentBankApproval * 100).toFixed(2)}%` },
-        { label: "Forter Bank Optimization Uplift", value: `${forterKPIs.bankUplift}%` },
+        { label: "Current Bank Decline Rate", value: `${currentBankDeclinePercent}%` },
+        { label: "Forter Bank Decline Improvement", value: `${bankDeclineImprovement}%` },
+        { 
+          label: "Improved Bank Decline Rate", 
+          value: `${improvedBankDeclineRate.toFixed(2)}%`,
+          formula: `${currentBankDeclinePercent}% × (1 - ${bankDeclineImprovement}%)`
+        },
         { 
           label: "Improved Bank Approval Rate", 
           value: `${(futureBankApproval * 100).toFixed(2)}%`,
-          formula: `${(currentBankApproval * 100).toFixed(2)}% + ${forterKPIs.bankUplift}% = ${(futureBankApproval * 100).toFixed(2)}%`
+          formula: `100% - ${improvedBankDeclineRate.toFixed(2)}%`
         },
-        { label: "Forter Fraud Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` },
-        {
-          label: "Future Complete Rate with Forter",
-          value: `${metrics.futureApacCompleteRate.toFixed(2)}%`,
-          formula: `${(futureBankApproval * 100).toFixed(2)}% × ${forterKPIs.fraudApprovalRate}%`,
-          isResult: true,
-        }
+        { label: "Forter Fraud Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` }
       );
+      
+      if (apac3DSRate > 0) {
+        calculations.push(
+          { label: "Current 3DS Challenge Rate", value: `${apac3DSRate}%` },
+          { 
+            label: "Optimized 3DS Challenge Rate", 
+            value: `${futureApac3DSRate.toFixed(2)}%`,
+            formula: `${apac3DSRate}% × (1 - ${forterKPIs.threeDSChallengeReduction}%)`
+          }
+        );
+      }
+      
+      if (apacManualReviewRate > 0) {
+        calculations.push(
+          { label: "Current Manual Review Rate", value: `${apacManualReviewRate}%` },
+          { 
+            label: "Optimized Manual Review Rate", 
+            value: `${futureApacManualReviewRate.toFixed(2)}%`,
+            formula: `${apacManualReviewRate}% × (1 - ${forterKPIs.manualReviewReduction}%)`
+          }
+        );
+      }
+      
+      calculations.push({
+        label: "Future Complete Rate with Forter",
+        value: `${metrics.futureApacCompleteRate.toFixed(2)}%`,
+        isResult: true,
+      });
     }
 
     setBreakdownData({
@@ -558,7 +703,8 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
               potential
             </p>
             <p className="text-muted-foreground">
-              • Forter's {forterKPIs.fraudApprovalRate}% fraud approval rate and optimized bank routing can
+              • Forter's {forterKPIs.fraudApprovalRate}% fraud approval rate, {forterKPIs.bankDeclineImprovement}% bank decline reduction, 
+              {forterKPIs.threeDSChallengeReduction}% 3DS optimization, and {forterKPIs.manualReviewReduction}% manual review reduction 
               unlock {formatCurrency(metrics.totalGMVUplift)} in additional GMV
             </p>
             <p className="text-muted-foreground">

@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 export type ForterKPIs = {
   fraudApprovalRate: number; // Default 99%
-  bankUplift: number; // Default 1%
+  bankDeclineImprovement: number; // Default 1% (reduces decline rate by this %)
   chargebackReduction: number; // Default 70%
   disputeRate: number; // Default 95%
   fraudDisputeWinRate: number; // Default 25.2%
@@ -13,6 +13,8 @@ export type ForterKPIs = {
   serviceDisputeWinRate: number; // Default 45%
   manualReviewReduction: number; // Default 50%
   timePerReviewReduction: number; // Default 80%
+  threeDSChallengeReduction: number; // Default 30%
+  threeDSApprovalImprovement: number; // Default 2%
 };
 
 interface ForterKPIConfigProps {
@@ -22,7 +24,7 @@ interface ForterKPIConfigProps {
 
 export const defaultForterKPIs: ForterKPIs = {
   fraudApprovalRate: 99,
-  bankUplift: 1,
+  bankDeclineImprovement: 1,
   chargebackReduction: 70,
   disputeRate: 95,
   fraudDisputeWinRate: 25.2,
@@ -30,6 +32,8 @@ export const defaultForterKPIs: ForterKPIs = {
   serviceDisputeWinRate: 45,
   manualReviewReduction: 50,
   timePerReviewReduction: 80,
+  threeDSChallengeReduction: 30,
+  threeDSApprovalImprovement: 2,
 };
 
 export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
@@ -65,16 +69,16 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="bankUplift">Bank Approval Uplift (%)</Label>
+                  <Label htmlFor="bankDeclineImprovement">Bank Decline Rate Improvement (%)</Label>
                   <Input
-                    id="bankUplift"
+                    id="bankDeclineImprovement"
                     type="number"
                     step="0.1"
-                    value={kpis.bankUplift}
-                    onChange={(e) => updateKPI("bankUplift", parseFloat(e.target.value))}
+                    value={kpis.bankDeclineImprovement}
+                    onChange={(e) => updateKPI("bankDeclineImprovement", parseFloat(e.target.value))}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Improvement in bank approval rates
+                    Reduction in bank decline rate (e.g., 1% reduces 7% decline to 6.93%)
                   </p>
                 </div>
 
@@ -145,6 +149,48 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
                   />
                   <p className="text-xs text-muted-foreground">
                     % of disputed service chargebacks won
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="threeDSReduction">3DS Challenge Reduction (%)</Label>
+                  <Input
+                    id="threeDSReduction"
+                    type="number"
+                    step="0.1"
+                    value={kpis.threeDSChallengeReduction}
+                    onChange={(e) => updateKPI("threeDSChallengeReduction", parseFloat(e.target.value))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Reduction in 3DS challenge rate
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="threeDSImprovement">3DS Approval Improvement (%)</Label>
+                  <Input
+                    id="threeDSImprovement"
+                    type="number"
+                    step="0.1"
+                    value={kpis.threeDSApprovalImprovement}
+                    onChange={(e) => updateKPI("threeDSApprovalImprovement", parseFloat(e.target.value))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Improvement in approval rate for challenged transactions
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="manualReviewReduction">Manual Review Reduction (%)</Label>
+                  <Input
+                    id="manualReviewReduction"
+                    type="number"
+                    step="0.1"
+                    value={kpis.manualReviewReduction}
+                    onChange={(e) => updateKPI("manualReviewReduction", parseFloat(e.target.value))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Reduction in transactions requiring manual review
                   </p>
                 </div>
               </div>

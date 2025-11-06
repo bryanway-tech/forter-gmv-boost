@@ -28,6 +28,8 @@ export type CalculatorData = {
   amerPostAuthApprovalRate?: number;
   amerIssuingBankDeclineRate?: number;
   amerFraudCheckTiming?: "pre-auth" | "post-auth";
+  amer3DSChallengeRate?: number;
+  amerManualReviewRate?: number;
   
   // EMEA Regional Data
   emeaAnnualGMV?: number;
@@ -36,6 +38,8 @@ export type CalculatorData = {
   emeaPostAuthApprovalRate?: number;
   emeaIssuingBankDeclineRate?: number;
   emeaFraudCheckTiming?: "pre-auth" | "post-auth";
+  emea3DSChallengeRate?: number;
+  emeaManualReviewRate?: number;
   
   // APAC Regional Data
   apacAnnualGMV?: number;
@@ -44,6 +48,8 @@ export type CalculatorData = {
   apacPostAuthApprovalRate?: number;
   apacIssuingBankDeclineRate?: number;
   apacFraudCheckTiming?: "pre-auth" | "post-auth";
+  apac3DSChallengeRate?: number;
+  apacManualReviewRate?: number;
   
   // Chargebacks - Challenges & Solutions
   chargebacksEnabled?: boolean;

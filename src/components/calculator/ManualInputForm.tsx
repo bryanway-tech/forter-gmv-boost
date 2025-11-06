@@ -235,6 +235,30 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   onChange={(e) => updateField("amerIssuingBankDeclineRate", parseFloat(e.target.value))}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amer3DSRate">3DS Challenge Rate (%)</Label>
+                <Input
+                  id="amer3DSRate"
+                  type="number"
+                  placeholder="15"
+                  value={formData.amer3DSChallengeRate || ""}
+                  onChange={(e) => updateField("amer3DSChallengeRate", parseFloat(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">% of transactions requiring 3DS challenge</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amerManualReview">Manual Review Rate (%)</Label>
+                <Input
+                  id="amerManualReview"
+                  type="number"
+                  placeholder="5"
+                  value={formData.amerManualReviewRate || ""}
+                  onChange={(e) => updateField("amerManualReviewRate", parseFloat(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">% of transactions requiring manual review</p>
+              </div>
             </div>
           </TabsContent>
 
@@ -283,6 +307,30 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   value={formData.emeaIssuingBankDeclineRate || ""}
                   onChange={(e) => updateField("emeaIssuingBankDeclineRate", parseFloat(e.target.value))}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="emea3DSRate">3DS Challenge Rate (%)</Label>
+                <Input
+                  id="emea3DSRate"
+                  type="number"
+                  placeholder="20"
+                  value={formData.emea3DSChallengeRate || ""}
+                  onChange={(e) => updateField("emea3DSChallengeRate", parseFloat(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">% of transactions requiring 3DS challenge</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="emeaManualReview">Manual Review Rate (%)</Label>
+                <Input
+                  id="emeaManualReview"
+                  type="number"
+                  placeholder="5"
+                  value={formData.emeaManualReviewRate || ""}
+                  onChange={(e) => updateField("emeaManualReviewRate", parseFloat(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">% of transactions requiring manual review</p>
               </div>
             </div>
           </TabsContent>
@@ -365,6 +413,30 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   value={formData.apacIssuingBankDeclineRate || ""}
                   onChange={(e) => updateField("apacIssuingBankDeclineRate", parseFloat(e.target.value))}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="apac3DSRate">3DS Challenge Rate (%)</Label>
+                <Input
+                  id="apac3DSRate"
+                  type="number"
+                  placeholder="15"
+                  value={formData.apac3DSChallengeRate || ""}
+                  onChange={(e) => updateField("apac3DSChallengeRate", parseFloat(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">% of transactions requiring 3DS challenge</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="apacManualReview">Manual Review Rate (%)</Label>
+                <Input
+                  id="apacManualReview"
+                  type="number"
+                  placeholder="5"
+                  value={formData.apacManualReviewRate || ""}
+                  onChange={(e) => updateField("apacManualReviewRate", parseFloat(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">% of transactions requiring manual review</p>
               </div>
             </div>
           </TabsContent>
