@@ -22,7 +22,7 @@ export const ChatbotInterface = ({ onComplete }: ChatbotInterfaceProps) => {
     {
       role: "assistant",
       content:
-        "Hello! I'll help you assess the potential value of Forter's fraud management solution. Let's start with some basic information. What is the customer's name?",
+        "Hello! I'll help you calculate the potential GMV uplift with Forter's fraud management solution. Let's start with your revenue data. What is your annual gross revenue in the AMER region (in USD)?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -54,15 +54,25 @@ export const ChatbotInterface = ({ onComplete }: ChatbotInterfaceProps) => {
 
       if (error) throw error;
 
-      setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
-
-      if (data.updatedData) {
-        setCollectedData(data.updatedData);
+      // Parse response if it's a string
+      let parsedData = data;
+      if (typeof data === 'string') {
+        try {
+          parsedData = JSON.parse(data);
+        } catch {
+          parsedData = { message: data, updatedData: collectedData, isComplete: false };
+        }
       }
 
-      if (data.isComplete) {
+      setMessages((prev) => [...prev, { role: "assistant", content: parsedData.message }]);
+
+      if (parsedData.updatedData) {
+        setCollectedData(parsedData.updatedData);
+      }
+
+      if (parsedData.isComplete) {
         setTimeout(() => {
-          onComplete(data.updatedData);
+          onComplete(parsedData.updatedData);
           toast.success("Assessment complete!");
         }, 1000);
       }
