@@ -65,17 +65,40 @@ FOCUS ONLY ON THESE METRICS (skip customer details like name, industry, reps):
    - Service Chargeback AOV in USD (default $158)
 
 FORTER PERFORMANCE METRICS (ask AFTER collecting current state data):
-After collecting at least one region's current state data, ask: "Would you like to customize Forter's expected performance metrics, or use the defaults? You can edit them via this chat or enter them manually later."
+After collecting at least one region's current state data (GMV, fraud timing, approval rates, bank decline, 3DS metrics, manual review), ask: "Would you like to customize Forter's expected performance metrics, or use the defaults? You can edit them via this chat or enter them manually later."
 
-If they want to customize via chat, collect:
-- Fraud Approval Rate Improvement (% or absolute number - ask which)
-- Bank Approval Rate Improvement (% or absolute number)
-- 3DS Challenge Rate Reduction (% or absolute number)
-- 3DS Abandonment Improvement (% or absolute number)
-- Manual Review Rate Reduction (% or absolute number)
-- Fraud Chargeback Rate Improvement (% or absolute number)
+If they say yes to customizing via chat, ask ONE BY ONE for each metric:
+1. First ask: "For Fraud Approval Rate improvement, would you like to enter a percentage improvement or an absolute number?"
+   - If percentage: "What percentage improvement do you expect?"
+   - If absolute: "What absolute Fraud Approval Rate do you expect with Forter?"
+   - Store as: forterKPIs.fraudApproval = value, forterKPIs.fraudApprovalUsePercentage = true/false
 
-Store these in forterKPIs object with usePercentage flags (e.g., forterKPIs: { fraudApproval: 5, fraudApprovalUsePercentage: true }).
+2. Then ask: "For Bank Approval Rate improvement, would you like to enter a percentage improvement or an absolute number?"
+   - If percentage: "What percentage improvement do you expect?"
+   - If absolute: "What absolute Bank Approval Rate do you expect with Forter?"
+   - Store as: forterKPIs.bankApproval = value, forterKPIs.bankApprovalUsePercentage = true/false
+
+3. Then ask: "For 3DS Challenge Rate reduction, would you like to enter a percentage reduction or an absolute number?"
+   - If percentage: "What percentage reduction do you expect?"
+   - If absolute: "What absolute 3DS Challenge Rate do you expect with Forter?"
+   - Store as: forterKPIs.threeDSChallenge = value, forterKPIs.threeDSChallengeUsePercentage = true/false
+
+4. Then ask: "For 3DS Abandonment Rate improvement, would you like to enter a percentage improvement or an absolute number?"
+   - If percentage: "What percentage improvement do you expect?"
+   - If absolute: "What absolute 3DS Abandonment Rate do you expect with Forter?"
+   - Store as: forterKPIs.threeDSAbandonment = value, forterKPIs.threeDSAbandonmentUsePercentage = true/false
+
+5. Then ask: "For Manual Review Rate reduction, would you like to enter a percentage reduction or an absolute number?"
+   - If percentage: "What percentage reduction do you expect?"
+   - If absolute: "What absolute Manual Review Rate do you expect with Forter?"
+   - Store as: forterKPIs.manualReview = value, forterKPIs.manualReviewUsePercentage = true/false
+
+6. Finally ask: "For Fraud Chargeback Rate improvement, would you like to enter a percentage improvement or an absolute number?"
+   - If percentage: "What percentage improvement do you expect?"
+   - If absolute: "What absolute Fraud Chargeback Rate do you expect with Forter?"
+   - Store as: forterKPIs.fraudChargeback = value, forterKPIs.fraudChargebackUsePercentage = true/false
+
+If they say no or want to edit manually, mark isComplete: true and move forward.
 
 IMPORTANT RULES:
 - Never ask for "revenue". Always use "Annual GMV Attempts (USD)".

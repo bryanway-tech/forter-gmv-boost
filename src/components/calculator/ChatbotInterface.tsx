@@ -33,12 +33,21 @@ export const ChatbotInterface = ({ onComplete, initialData }: ChatbotInterfacePr
   const [isLoading, setIsLoading] = useState(false);
   const [collectedData, setCollectedData] = useState<CalculatorData>(initialData || {});
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Auto-focus input after messages update and loading completes
+  useEffect(() => {
+    if (!isLoading && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isLoading, messages]);
 
   const sanitizeAssistantText = (msg: string) => {
     return msg
@@ -144,6 +153,7 @@ export const ChatbotInterface = ({ onComplete, initialData }: ChatbotInterfacePr
 
       <div className="flex gap-2">
         <Input
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
