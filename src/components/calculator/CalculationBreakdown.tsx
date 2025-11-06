@@ -119,10 +119,6 @@ export const CalculationBreakdown = ({
                           if (!impactStr || impactStr === "N/A" || impactStr === "0" || impactStr === "$0" || impactStr === "0.00%" || impactStr === "+0" || impactStr === "+$0") {
                             return "text-foreground";
                           }
-                          // Result lines use primary color
-                          if (calc.isResult) {
-                            return "text-primary";
-                          }
                           // For "bad" metrics (declines, abandonment), negative is favorable (green)
                           if (calc.isBad) {
                             return impactStr.includes("-") 
