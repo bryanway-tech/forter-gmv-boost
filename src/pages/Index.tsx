@@ -16,34 +16,51 @@ export type CalculatorData = {
   industry?: string;
   hqLocation?: string;
   
-  // AMER Fraud Management
-  amerGrossRevenue?: number;
-  amerGrossMargin?: number;
+  // Fraud Management - Challenges & Solutions
+  fraudManagementEnabled?: boolean;
+  fraudManagementChallenges?: string[];
+  fraudManagementSolution?: "standalone" | "combined";
+  
+  // AMER Regional Data
+  amerAnnualGMV?: number;
+  amerGrossMarginPercent?: number;
   amerPreAuthApprovalRate?: number;
   amerPostAuthApprovalRate?: number;
   amerIssuingBankDeclineRate?: number;
   amerFraudCheckTiming?: "pre-auth" | "post-auth";
   
-  // EMEA Fraud Management
-  emeaGrossRevenue?: number;
-  emeaGrossMargin?: number;
+  // EMEA Regional Data
+  emeaAnnualGMV?: number;
+  emeaGrossMarginPercent?: number;
   emeaPreAuthApprovalRate?: number;
   emeaPostAuthApprovalRate?: number;
   emeaIssuingBankDeclineRate?: number;
+  emeaFraudCheckTiming?: "pre-auth" | "post-auth";
   
-  // APAC Fraud Management
-  apacGrossRevenue?: number;
-  apacGrossMargin?: number;
+  // APAC Regional Data
+  apacAnnualGMV?: number;
+  apacGrossMarginPercent?: number;
   apacPreAuthApprovalRate?: number;
   apacPostAuthApprovalRate?: number;
   apacIssuingBankDeclineRate?: number;
   apacFraudCheckTiming?: "pre-auth" | "post-auth";
   
-  // Chargebacks
-  fraudChargebackRate?: number;
-  fraudChargebackAOV?: number;
-  serviceChargebackRate?: number;
-  serviceChargebackAOV?: number;
+  // Chargebacks - Challenges & Solutions
+  chargebacksEnabled?: boolean;
+  chargebackChallenges?: string[];
+  chargebackSolution?: "standalone" | "combined";
+  
+  // Fraud Chargebacks
+  fraudCBRate?: number;
+  fraudCBAOV?: number;
+  fraudCBProcessors?: string[];
+  fraudCBProcessorOther?: string;
+  
+  // Service Chargebacks
+  serviceCBRate?: number;
+  serviceCBAOV?: number;
+  serviceCBProcessors?: string[];
+  serviceCBProcessorOther?: string;
   
   // Forter KPIs
   forterKPIs?: ForterKPIs;

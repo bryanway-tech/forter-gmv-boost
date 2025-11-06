@@ -15,11 +15,11 @@ interface ManualInputFormProps {
 
 export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
   const [formData, setFormData] = useState<CalculatorData>({
-    amerGrossMargin: 50,
-    emeaGrossMargin: 50,
-    apacGrossMargin: 50,
-    fraudChargebackAOV: 158,
-    serviceChargebackAOV: 158,
+    amerGrossMarginPercent: 50,
+    emeaGrossMarginPercent: 50,
+    apacGrossMarginPercent: 50,
+    fraudCBAOV: 158,
+    serviceCBAOV: 158,
     forterKPIs: defaultForterKPIs,
   });
 
@@ -35,22 +35,22 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
     return 0;
   };
 
-  const amerTransactions = formData.amerGrossRevenue && formData.amerGrossRevenue > 0
-    ? Math.round(formData.amerGrossRevenue / 105) // Default AOV assumption
+  const amerTransactions = formData.amerAnnualGMV && formData.amerAnnualGMV > 0
+    ? Math.round(formData.amerAnnualGMV / 105) // Default AOV assumption
     : 0;
 
-  const emeaTransactions = formData.emeaGrossRevenue && formData.emeaGrossRevenue > 0
-    ? Math.round(formData.emeaGrossRevenue / 105)
+  const emeaTransactions = formData.emeaAnnualGMV && formData.emeaAnnualGMV > 0
+    ? Math.round(formData.emeaAnnualGMV / 105)
     : 0;
 
-  const apacTransactions = formData.apacGrossRevenue && formData.apacGrossRevenue > 0
-    ? Math.round(formData.apacGrossRevenue / 105)
+  const apacTransactions = formData.apacAnnualGMV && formData.apacAnnualGMV > 0
+    ? Math.round(formData.apacAnnualGMV / 105)
     : 0;
 
   const handleSubmit = () => {
     // Validate required fields
-    if (!formData.amerGrossRevenue && !formData.emeaGrossRevenue && !formData.apacGrossRevenue) {
-      toast.error("Please enter revenue for at least one region");
+    if (!formData.amerAnnualGMV && !formData.emeaAnnualGMV && !formData.apacAnnualGMV) {
+      toast.error("Please enter GMV for at least one region");
       return;
     }
 
@@ -129,23 +129,23 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
             </div>
 
             {/* Display calculated transactions */}
-            {(formData.amerGrossRevenue || formData.emeaGrossRevenue || formData.apacGrossRevenue) && (
+            {(formData.amerAnnualGMV || formData.emeaAnnualGMV || formData.apacAnnualGMV) && (
               <div className="mt-4 p-4 bg-muted rounded-lg">
                 <h4 className="font-semibold mb-2">Calculated Transactions</h4>
                 <div className="grid md:grid-cols-3 gap-4 text-sm">
-                  {formData.amerGrossRevenue && (
+                  {formData.amerAnnualGMV && (
                     <div>
                       <span className="text-muted-foreground">AMER: </span>
                       <span className="font-bold">{amerTransactions.toLocaleString()}</span>
                     </div>
                   )}
-                  {formData.emeaGrossRevenue && (
+                  {formData.emeaAnnualGMV && (
                     <div>
                       <span className="text-muted-foreground">EMEA: </span>
                       <span className="font-bold">{emeaTransactions.toLocaleString()}</span>
                     </div>
                   )}
-                  {formData.apacGrossRevenue && (
+                  {formData.apacAnnualGMV && (
                     <div>
                       <span className="text-muted-foreground">APAC: </span>
                       <span className="font-bold">{apacTransactions.toLocaleString()}</span>
@@ -160,13 +160,13 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
           <TabsContent value="amer" className="space-y-4 mt-6">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="amerRevenue">Gross Revenue ($)</Label>
+                <Label htmlFor="amerGMV">Annual GMV ($)</Label>
                 <Input
-                  id="amerRevenue"
+                  id="amerGMV"
                   type="number"
                   placeholder="75000000"
-                  value={formData.amerGrossRevenue || ""}
-                  onChange={(e) => updateField("amerGrossRevenue", parseFloat(e.target.value))}
+                  value={formData.amerAnnualGMV || ""}
+                  onChange={(e) => updateField("amerAnnualGMV", parseFloat(e.target.value))}
                 />
               </div>
 
@@ -176,8 +176,8 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   id="amerMargin"
                   type="number"
                   placeholder="50"
-                  value={formData.amerGrossMargin || ""}
-                  onChange={(e) => updateField("amerGrossMargin", parseFloat(e.target.value))}
+                  value={formData.amerGrossMarginPercent || ""}
+                  onChange={(e) => updateField("amerGrossMarginPercent", parseFloat(e.target.value))}
                 />
               </div>
 
@@ -242,13 +242,13 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
           <TabsContent value="emea" className="space-y-4 mt-6">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="emeaRevenue">Gross Revenue ($)</Label>
+                <Label htmlFor="emeaGMV">Annual GMV ($)</Label>
                 <Input
-                  id="emeaRevenue"
+                  id="emeaGMV"
                   type="number"
                   placeholder="75000000"
-                  value={formData.emeaGrossRevenue || ""}
-                  onChange={(e) => updateField("emeaGrossRevenue", parseFloat(e.target.value))}
+                  value={formData.emeaAnnualGMV || ""}
+                  onChange={(e) => updateField("emeaAnnualGMV", parseFloat(e.target.value))}
                 />
               </div>
 
@@ -258,8 +258,8 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   id="emeaMargin"
                   type="number"
                   placeholder="50"
-                  value={formData.emeaGrossMargin || ""}
-                  onChange={(e) => updateField("emeaGrossMargin", parseFloat(e.target.value))}
+                  value={formData.emeaGrossMarginPercent || ""}
+                  onChange={(e) => updateField("emeaGrossMarginPercent", parseFloat(e.target.value))}
                 />
               </div>
 
@@ -291,13 +291,13 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
           <TabsContent value="apac" className="space-y-4 mt-6">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="apacRevenue">Gross Revenue ($)</Label>
+                <Label htmlFor="apacGMV">Annual GMV ($)</Label>
                 <Input
-                  id="apacRevenue"
+                  id="apacGMV"
                   type="number"
                   placeholder="75000000"
-                  value={formData.apacGrossRevenue || ""}
-                  onChange={(e) => updateField("apacGrossRevenue", parseFloat(e.target.value))}
+                  value={formData.apacAnnualGMV || ""}
+                  onChange={(e) => updateField("apacAnnualGMV", parseFloat(e.target.value))}
                 />
               </div>
 
@@ -307,8 +307,8 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   id="apacMargin"
                   type="number"
                   placeholder="50"
-                  value={formData.apacGrossMargin || ""}
-                  onChange={(e) => updateField("apacGrossMargin", parseFloat(e.target.value))}
+                  value={formData.apacGrossMarginPercent || ""}
+                  onChange={(e) => updateField("apacGrossMarginPercent", parseFloat(e.target.value))}
                 />
               </div>
 
@@ -379,8 +379,8 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   type="number"
                   placeholder="0.8"
                   step="0.01"
-                  value={formData.fraudChargebackRate || ""}
-                  onChange={(e) => updateField("fraudChargebackRate", parseFloat(e.target.value))}
+                  value={formData.fraudCBRate || ""}
+                  onChange={(e) => updateField("fraudCBRate", parseFloat(e.target.value))}
                 />
               </div>
 
@@ -390,8 +390,8 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   id="fraudCBAOV"
                   type="number"
                   placeholder="158"
-                  value={formData.fraudChargebackAOV || ""}
-                  onChange={(e) => updateField("fraudChargebackAOV", parseFloat(e.target.value))}
+                  value={formData.fraudCBAOV || ""}
+                  onChange={(e) => updateField("fraudCBAOV", parseFloat(e.target.value))}
                 />
               </div>
 
@@ -402,8 +402,8 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   type="number"
                   placeholder="0.5"
                   step="0.01"
-                  value={formData.serviceChargebackRate || ""}
-                  onChange={(e) => updateField("serviceChargebackRate", parseFloat(e.target.value))}
+                  value={formData.serviceCBRate || ""}
+                  onChange={(e) => updateField("serviceCBRate", parseFloat(e.target.value))}
                 />
               </div>
 
@@ -413,8 +413,8 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   id="serviceCBAOV"
                   type="number"
                   placeholder="158"
-                  value={formData.serviceChargebackAOV || ""}
-                  onChange={(e) => updateField("serviceChargebackAOV", parseFloat(e.target.value))}
+                  value={formData.serviceCBAOV || ""}
+                  onChange={(e) => updateField("serviceCBAOV", parseFloat(e.target.value))}
                 />
               </div>
             </div>

@@ -24,9 +24,9 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
 
   // Calculate current and future states
   const calculateMetrics = () => {
-    const amerRevenue = data.amerGrossRevenue || 0;
-    const emeaRevenue = data.emeaGrossRevenue || 0;
-    const apacRevenue = data.apacGrossRevenue || 0;
+    const amerRevenue = data.amerAnnualGMV || 0;
+    const emeaRevenue = data.emeaAnnualGMV || 0;
+    const apacRevenue = data.apacAnnualGMV || 0;
     const totalRevenue = amerRevenue + emeaRevenue + apacRevenue;
 
     // AMER calculations
@@ -63,7 +63,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
     const totalGMVUplift = amerGMVUplift + emeaGMVUplift + apacGMVUplift;
 
     // Chargeback calculations
-    const currentChargebacks = totalRevenue * ((data.fraudChargebackRate || 0.8) / 100);
+    const currentChargebacks = totalRevenue * ((data.fraudCBRate || 0.8) / 100);
     const reductionRate = forterKPIs.chargebackReduction / 100;
     const futureChargebacks = currentChargebacks * (1 - reductionRate);
     const chargebackSavings = currentChargebacks - futureChargebacks;
@@ -109,7 +109,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
   const showGMVBreakdown = () => {
     const calculations = [];
 
-    if (data.amerGrossRevenue) {
+    if (data.amerAnnualGMV) {
       calculations.push(
         { label: "AMER Revenue", value: metrics.amerRevenue },
         { label: "Current Complete Rate", value: `${formatPercent(metrics.currentAmerCompleteRate)}` },
@@ -122,7 +122,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
       );
     }
 
-    if (data.emeaGrossRevenue) {
+    if (data.emeaAnnualGMV) {
       calculations.push(
         { label: "EMEA Revenue", value: metrics.emeaRevenue },
         { label: "Current Complete Rate", value: `${formatPercent(metrics.currentEmeaCompleteRate)}` },
@@ -135,7 +135,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
       );
     }
 
-    if (data.apacGrossRevenue) {
+    if (data.apacAnnualGMV) {
       calculations.push(
         { label: "APAC Revenue", value: metrics.apacRevenue },
         { label: "Current Complete Rate", value: `${formatPercent(metrics.currentApacCompleteRate)}` },
@@ -166,11 +166,11 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
       title: "Chargeback Savings Calculation",
       calculations: [
         { label: "Total Revenue", value: metrics.totalRevenue },
-        { label: "Current Fraud Chargeback Rate", value: `${data.fraudChargebackRate || 0.8}%` },
+        { label: "Current Fraud Chargeback Rate", value: `${data.fraudCBRate || 0.8}%` },
         {
           label: "Current Chargebacks",
           value: metrics.currentChargebacks,
-          formula: `${formatCurrency(metrics.totalRevenue)} × ${data.fraudChargebackRate || 0.8}%`,
+          formula: `${formatCurrency(metrics.totalRevenue)} × ${data.fraudCBRate || 0.8}%`,
         },
         {
           label: "Forter Chargeback Reduction",
@@ -279,7 +279,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
         <Card className="p-6">
           <h2 className="text-2xl font-bold mb-6">Complete Rate Analysis</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            {data.amerGrossRevenue && (
+            {data.amerAnnualGMV && (
               <div>
                 <h3 className="font-semibold mb-4 text-lg">AMER Region</h3>
                 <div className="space-y-4">
@@ -308,7 +308,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
               </div>
             )}
 
-            {data.emeaGrossRevenue && (
+            {data.emeaAnnualGMV && (
               <div>
                 <h3 className="font-semibold mb-4 text-lg">EMEA Region</h3>
                 <div className="space-y-4">
@@ -337,7 +337,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
               </div>
             )}
 
-            {data.apacGrossRevenue && (
+            {data.apacAnnualGMV && (
               <div>
                 <h3 className="font-semibold mb-4 text-lg">APAC Region</h3>
                 <div className="space-y-4">
