@@ -249,6 +249,19 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="amer3DSAbandonment">3DS Abandonment Rate (%)</Label>
+                <Input
+                  id="amer3DSAbandonment"
+                  type="number"
+                  placeholder="5"
+                  value={formData.amer3DSAbandonmentRate || ""}
+                  onChange={(e) => updateField("amer3DSAbandonmentRate", parseFloat(e.target.value))}
+                  step="0.1"
+                />
+                <p className="text-xs text-muted-foreground">% of 3DS challenged transactions that are abandoned</p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="amerManualReview">Manual Review Rate (%)</Label>
                 <Input
                   id="amerManualReview"
@@ -319,6 +332,19 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   onChange={(e) => updateField("emea3DSChallengeRate", parseFloat(e.target.value))}
                 />
                 <p className="text-xs text-muted-foreground">% of transactions requiring 3DS challenge</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="emea3DSAbandonment">3DS Abandonment Rate (%)</Label>
+                <Input
+                  id="emea3DSAbandonment"
+                  type="number"
+                  placeholder="5"
+                  value={formData.emea3DSAbandonmentRate || ""}
+                  onChange={(e) => updateField("emea3DSAbandonmentRate", parseFloat(e.target.value))}
+                  step="0.1"
+                />
+                <p className="text-xs text-muted-foreground">% of 3DS challenged transactions that are abandoned</p>
               </div>
 
               <div className="space-y-2">
@@ -425,6 +451,19 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   onChange={(e) => updateField("apac3DSChallengeRate", parseFloat(e.target.value))}
                 />
                 <p className="text-xs text-muted-foreground">% of transactions requiring 3DS challenge</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="apac3DSAbandonment">3DS Abandonment Rate (%)</Label>
+                <Input
+                  id="apac3DSAbandonment"
+                  type="number"
+                  placeholder="5"
+                  value={formData.apac3DSAbandonmentRate || ""}
+                  onChange={(e) => updateField("apac3DSAbandonmentRate", parseFloat(e.target.value))}
+                  step="0.1"
+                />
+                <p className="text-xs text-muted-foreground">% of 3DS challenged transactions that are abandoned</p>
               </div>
 
               <div className="space-y-2">

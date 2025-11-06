@@ -22,6 +22,15 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
 
   const forterKPIs = data.forterKPIs || defaultForterKPIs;
 
+  const getAbandonmentRate = (region: 'amer' | 'emea' | 'apac') => {
+    const rate = region === 'amer' 
+      ? data.amer3DSAbandonmentRate 
+      : region === 'emea' 
+      ? data.emea3DSAbandonmentRate 
+      : data.apac3DSAbandonmentRate;
+    return (rate || 5) / 100; // Default 5% if not specified
+  };
+
   // Calculate current and future states
   const calculateMetrics = () => {
     const amerRevenue = data.amerAnnualGMV || 0;
@@ -39,8 +48,9 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
     
     // Current state with 3DS and manual review impacts
     const amer3DSRate = (data.amer3DSChallengeRate || 0) / 100;
+    const amerAbandonmentRate = getAbandonmentRate('amer');
     const amerManualReviewRate = (data.amerManualReviewRate || 0) / 100;
-    const currentAmerCompleteRate = amerBankApproval * amerFraudApproval * (1 - amer3DSRate * 0.05) * (1 - amerManualReviewRate * 0.03);
+    const currentAmerCompleteRate = amerBankApproval * amerFraudApproval * (1 - amer3DSRate * amerAbandonmentRate) * (1 - amerManualReviewRate * 0.03);
     
     // Future state with Forter - fix bank decline calculation per Excel J26
     const bankDeclineImprovement = forterKPIs.bankDeclineImprovement / 100;
@@ -50,7 +60,9 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
     // Apply 3DS optimization
     const forter3DSReduction = forterKPIs.threeDSChallengeReduction / 100;
     const futureAmer3DSRate = amer3DSRate * (1 - forter3DSReduction);
-    const threeDSApprovalImpact = 1 - futureAmer3DSRate * (0.05 - forterKPIs.threeDSApprovalImprovement / 100);
+    const forterAbandonmentImprovement = forterKPIs.threeDSAbandonmentImprovement / 100;
+    const futureAmerAbandonmentRate = Math.max(0, amerAbandonmentRate - forterAbandonmentImprovement);
+    const threeDSApprovalImpact = 1 - futureAmer3DSRate * futureAmerAbandonmentRate;
     
     // Apply manual review reduction
     const forterManualReviewReduction = forterKPIs.manualReviewReduction / 100;
@@ -65,13 +77,15 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
     const emeaFraudApproval = (data.emeaPreAuthApprovalRate || 95) / 100;
     
     const emea3DSRate = (data.emea3DSChallengeRate || 0) / 100;
+    const emeaAbandonmentRate = getAbandonmentRate('emea');
     const emeaManualReviewRate = (data.emeaManualReviewRate || 0) / 100;
-    const currentEmeaCompleteRate = emeaBankApproval * emeaFraudApproval * (1 - emea3DSRate * 0.05) * (1 - emeaManualReviewRate * 0.03);
+    const currentEmeaCompleteRate = emeaBankApproval * emeaFraudApproval * (1 - emea3DSRate * emeaAbandonmentRate) * (1 - emeaManualReviewRate * 0.03);
     
     const futureEmeaBankDeclineRate = emeaBankDeclineRate * (1 - bankDeclineImprovement);
     const futureEmeaBankApproval = Math.min(0.99, 1 - futureEmeaBankDeclineRate);
     const futureEmea3DSRate = emea3DSRate * (1 - forter3DSReduction);
-    const emea3DSApprovalImpact = 1 - futureEmea3DSRate * (0.05 - forterKPIs.threeDSApprovalImprovement / 100);
+    const futureEmeaAbandonmentRate = Math.max(0, emeaAbandonmentRate - forterAbandonmentImprovement);
+    const emea3DSApprovalImpact = 1 - futureEmea3DSRate * futureEmeaAbandonmentRate;
     const futureEmeaManualReviewRate = emeaManualReviewRate * (1 - forterManualReviewReduction);
     const emeaManualReviewImpact = 1 - futureEmeaManualReviewRate * 0.02;
     const futureEmeaCompleteRate = futureEmeaBankApproval * (forterKPIs.fraudApprovalRate / 100) * emea3DSApprovalImpact * emeaManualReviewImpact;
@@ -85,13 +99,15 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
         : (data.apacPostAuthApprovalRate || 98.5) / 100;
     
     const apac3DSRate = (data.apac3DSChallengeRate || 0) / 100;
+    const apacAbandonmentRate = getAbandonmentRate('apac');
     const apacManualReviewRate = (data.apacManualReviewRate || 0) / 100;
-    const currentApacCompleteRate = apacBankApproval * apacFraudApproval * (1 - apac3DSRate * 0.05) * (1 - apacManualReviewRate * 0.03);
+    const currentApacCompleteRate = apacBankApproval * apacFraudApproval * (1 - apac3DSRate * apacAbandonmentRate) * (1 - apacManualReviewRate * 0.03);
     
     const futureApacBankDeclineRate = apacBankDeclineRate * (1 - bankDeclineImprovement);
     const futureApacBankApproval = Math.min(0.99, 1 - futureApacBankDeclineRate);
     const futureApac3DSRate = apac3DSRate * (1 - forter3DSReduction);
-    const apac3DSApprovalImpact = 1 - futureApac3DSRate * (0.05 - forterKPIs.threeDSApprovalImprovement / 100);
+    const futureApacAbandonmentRate = Math.max(0, apacAbandonmentRate - forterAbandonmentImprovement);
+    const apac3DSApprovalImpact = 1 - futureApac3DSRate * futureApacAbandonmentRate;
     const futureApacManualReviewRate = apacManualReviewRate * (1 - forterManualReviewReduction);
     const apacManualReviewImpact = 1 - futureApacManualReviewRate * 0.02;
     const futureApacCompleteRate = futureApacBankApproval * (forterKPIs.fraudApprovalRate / 100) * apac3DSApprovalImpact * apacManualReviewImpact;
@@ -180,7 +196,8 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
         : (data.apacManualReviewRate || 0) / 100;
       
       const currentBankApproval = 1 - bankDeclineRate;
-      const current3DSImpact = 1 - threeDSRate * 0.05;
+      const abandonmentRate = getAbandonmentRate(region.toLowerCase() as 'amer' | 'emea' | 'apac');
+      const current3DSImpact = 1 - threeDSRate * abandonmentRate;
       const currentManualReviewImpact = 1 - manualReviewRate * 0.03;
       const currentCompleteRate = currentBankApproval * fraudApproval * current3DSImpact * currentManualReviewImpact;
       
@@ -189,10 +206,12 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
       const futureBankDeclineRate = bankDeclineRate * (1 - bankDeclineImprovement);
       const futureBankApproval = Math.min(0.99, 1 - futureBankDeclineRate);
       
+      // Apply 3DS optimization
       const forter3DSReduction = forterKPIs.threeDSChallengeReduction / 100;
       const future3DSRate = threeDSRate * (1 - forter3DSReduction);
-      const future3DSApprovalImprovement = forterKPIs.threeDSApprovalImprovement / 100;
-      const future3DSImpact = 1 - future3DSRate * (0.05 - future3DSApprovalImprovement);
+      const forterAbandonmentImprovement = forterKPIs.threeDSAbandonmentImprovement / 100;
+      const futureAbandonmentRate = Math.max(0, abandonmentRate - forterAbandonmentImprovement);
+      const future3DSImpact = 1 - future3DSRate * futureAbandonmentRate;
       
       const forterManualReviewReduction = forterKPIs.manualReviewReduction / 100;
       const futureManualReviewRate = manualReviewRate * (1 - forterManualReviewReduction);
@@ -223,10 +242,12 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
         calculations.push(
           { label: "2. 3DS CHALLENGE FLOW", value: "", isSubheader: true },
           { label: "   Current 3DS Challenge Rate", value: `${(threeDSRate * 100).toFixed(2)}%` },
-          { label: "   Current 3DS Abandonment Impact", value: `${((1 - current3DSImpact) * 100).toFixed(2)}%`, formula: `${(threeDSRate * 100).toFixed(2)}% × 5% abandonment` },
+          { label: "   Current 3DS Abandonment Rate", value: `${(abandonmentRate * 100).toFixed(2)}%` },
+          { label: "   Current 3DS Abandonment Impact", value: `${((1 - current3DSImpact) * 100).toFixed(2)}%`, formula: `${(threeDSRate * 100).toFixed(2)}% × ${(abandonmentRate * 100).toFixed(2)}% abandonment` },
           { label: "   Forter 3DS Challenge Rate", value: `${(future3DSRate * 100).toFixed(2)}%`, formula: `${(threeDSRate * 100).toFixed(2)}% × (1 - ${forterKPIs.threeDSChallengeReduction}%)` },
-          { label: "   Forter 3DS Approval Improvement", value: `${forterKPIs.threeDSApprovalImprovement}%` },
-          { label: "   Forter 3DS Impact", value: `${((1 - future3DSImpact) * 100).toFixed(2)}%`, formula: `${(future3DSRate * 100).toFixed(2)}% × (5% - ${forterKPIs.threeDSApprovalImprovement}%)` }
+          { label: "   Forter 3DS Abandonment Improvement", value: `${forterKPIs.threeDSAbandonmentImprovement}%` },
+          { label: "   Forter 3DS Abandonment Rate", value: `${(futureAbandonmentRate * 100).toFixed(2)}%`, formula: `${(abandonmentRate * 100).toFixed(2)}% - ${forterKPIs.threeDSAbandonmentImprovement}%` },
+          { label: "   Forter 3DS Impact", value: `${((1 - future3DSImpact) * 100).toFixed(2)}%`, formula: `${(future3DSRate * 100).toFixed(2)}% × ${(futureAbandonmentRate * 100).toFixed(2)}%` }
         );
       }
       
@@ -583,8 +604,8 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
               <img src={customerLogoUrl} alt="Customer" className="h-12 object-contain" />
             )}
           </div>
-          <Button variant="outline" onClick={onReset}>
-            New Assessment
+          <Button variant="default" onClick={onReset}>
+            Edit Inputs
           </Button>
         </div>
 

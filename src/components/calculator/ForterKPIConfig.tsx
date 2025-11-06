@@ -14,7 +14,7 @@ export type ForterKPIs = {
   manualReviewReduction: number; // Default 50%
   timePerReviewReduction: number; // Default 80%
   threeDSChallengeReduction: number; // Default 30%
-  threeDSApprovalImprovement: number; // Default 2%
+  threeDSAbandonmentImprovement: number; // Default 2%
 };
 
 interface ForterKPIConfigProps {
@@ -33,7 +33,7 @@ export const defaultForterKPIs: ForterKPIs = {
   manualReviewReduction: 50,
   timePerReviewReduction: 80,
   threeDSChallengeReduction: 30,
-  threeDSApprovalImprovement: 2,
+  threeDSAbandonmentImprovement: 2,
 };
 
 export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
@@ -167,16 +167,16 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="threeDSImprovement">3DS Approval Improvement (%)</Label>
+                  <Label htmlFor="threeDSAbandonment">3DS Abandonment Improvement (%)</Label>
                   <Input
-                    id="threeDSImprovement"
+                    id="threeDSAbandonment"
                     type="number"
                     step="0.1"
-                    value={kpis.threeDSApprovalImprovement}
-                    onChange={(e) => updateKPI("threeDSApprovalImprovement", parseFloat(e.target.value))}
+                    value={kpis.threeDSAbandonmentImprovement}
+                    onChange={(e) => updateKPI("threeDSAbandonmentImprovement", parseFloat(e.target.value))}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Improvement in approval rate for challenged transactions
+                    Reduction in abandonment rate for 3DS challenged transactions
                   </p>
                 </div>
 

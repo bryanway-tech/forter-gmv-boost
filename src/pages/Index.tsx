@@ -29,6 +29,7 @@ export type CalculatorData = {
   amerIssuingBankDeclineRate?: number;
   amerFraudCheckTiming?: "pre-auth" | "post-auth";
   amer3DSChallengeRate?: number;
+  amer3DSAbandonmentRate?: number;
   amerManualReviewRate?: number;
   
   // EMEA Regional Data
@@ -39,6 +40,7 @@ export type CalculatorData = {
   emeaIssuingBankDeclineRate?: number;
   emeaFraudCheckTiming?: "pre-auth" | "post-auth";
   emea3DSChallengeRate?: number;
+  emea3DSAbandonmentRate?: number;
   emeaManualReviewRate?: number;
   
   // APAC Regional Data
@@ -49,6 +51,7 @@ export type CalculatorData = {
   apacIssuingBankDeclineRate?: number;
   apacFraudCheckTiming?: "pre-auth" | "post-auth";
   apac3DSChallengeRate?: number;
+  apac3DSAbandonmentRate?: number;
   apacManualReviewRate?: number;
   
   // Chargebacks - Challenges & Solutions
