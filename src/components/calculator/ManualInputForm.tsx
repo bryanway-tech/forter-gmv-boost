@@ -167,8 +167,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="amerGMV"
                   type="number"
-                  value={formData.amerAnnualGMV || ""}
-                  onChange={(e) => updateField("amerAnnualGMV", parseFloat(e.target.value))}
+                  value={formData.amerAnnualGMV ?? ""}
+                  onChange={(e) => updateField("amerAnnualGMV", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -177,8 +177,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="amerMargin"
                   type="number"
-                  value={formData.amerGrossMarginPercent || ""}
-                  onChange={(e) => updateField("amerGrossMarginPercent", parseFloat(e.target.value))}
+                  value={formData.amerGrossMarginPercent ?? ""}
+                  onChange={(e) => updateField("amerGrossMarginPercent", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -206,8 +206,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                   <Input
                     id="amerPreAuth"
                     type="number"
-                    value={formData.amerPreAuthApprovalRate || ""}
-                    onChange={(e) => updateField("amerPreAuthApprovalRate", parseFloat(e.target.value))}
+                    value={formData.amerPreAuthApprovalRate ?? ""}
+                    onChange={(e) => updateField("amerPreAuthApprovalRate", parseFloat(e.target.value) || 0)}
                   />
                 </div>
               )}
@@ -218,8 +218,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                   <Input
                     id="amerPostAuth"
                     type="number"
-                    value={formData.amerPostAuthApprovalRate || ""}
-                    onChange={(e) => updateField("amerPostAuthApprovalRate", parseFloat(e.target.value))}
+                    value={formData.amerPostAuthApprovalRate ?? ""}
+                    onChange={(e) => updateField("amerPostAuthApprovalRate", parseFloat(e.target.value) || 0)}
                   />
                 </div>
               )}
@@ -229,8 +229,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="amerBankDecline"
                   type="number"
-                  value={formData.amerIssuingBankDeclineRate || ""}
-                  onChange={(e) => updateField("amerIssuingBankDeclineRate", parseFloat(e.target.value))}
+                  value={formData.amerIssuingBankDeclineRate ?? ""}
+                  onChange={(e) => updateField("amerIssuingBankDeclineRate", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -239,8 +239,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="amer3DSRate"
                   type="number"
-                  value={formData.amer3DSChallengeRate || ""}
-                  onChange={(e) => updateField("amer3DSChallengeRate", parseFloat(e.target.value))}
+                  value={formData.amer3DSChallengeRate ?? ""}
+                  onChange={(e) => updateField("amer3DSChallengeRate", parseFloat(e.target.value) || 0)}
                 />
                 <p className="text-xs text-muted-foreground">% of transactions requiring 3DS challenge</p>
               </div>
@@ -250,8 +250,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="amer3DSAbandonment"
                   type="number"
-                  value={formData.amer3DSAbandonmentRate || ""}
-                  onChange={(e) => updateField("amer3DSAbandonmentRate", parseFloat(e.target.value))}
+                  value={formData.amer3DSAbandonmentRate ?? ""}
+                  onChange={(e) => updateField("amer3DSAbandonmentRate", parseFloat(e.target.value) || 0)}
                   step="0.1"
                 />
                 <p className="text-xs text-muted-foreground">% of 3DS challenged transactions that are abandoned</p>
@@ -262,8 +262,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="amerManualReview"
                   type="number"
-                  value={formData.amerManualReviewRate || ""}
-                  onChange={(e) => updateField("amerManualReviewRate", parseFloat(e.target.value))}
+                  value={formData.amerManualReviewRate ?? ""}
+                  onChange={(e) => updateField("amerManualReviewRate", parseFloat(e.target.value) || 0)}
                 />
                 <p className="text-xs text-muted-foreground">% of transactions requiring manual review</p>
               </div>
@@ -278,8 +278,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="emeaGMV"
                   type="number"
-                  value={formData.emeaAnnualGMV || ""}
-                  onChange={(e) => updateField("emeaAnnualGMV", parseFloat(e.target.value))}
+                  value={formData.emeaAnnualGMV ?? ""}
+                  onChange={(e) => updateField("emeaAnnualGMV", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -288,8 +288,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="emeaMargin"
                   type="number"
-                  value={formData.emeaGrossMarginPercent || ""}
-                  onChange={(e) => updateField("emeaGrossMarginPercent", parseFloat(e.target.value))}
+                  value={formData.emeaGrossMarginPercent ?? ""}
+                  onChange={(e) => updateField("emeaGrossMarginPercent", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -298,8 +298,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="emeaPreAuth"
                   type="number"
-                  value={formData.emeaPreAuthApprovalRate || ""}
-                  onChange={(e) => updateField("emeaPreAuthApprovalRate", parseFloat(e.target.value))}
+                  value={formData.emeaPreAuthApprovalRate ?? ""}
+                  onChange={(e) => updateField("emeaPreAuthApprovalRate", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -308,8 +308,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="emeaBankDecline"
                   type="number"
-                  value={formData.emeaIssuingBankDeclineRate || ""}
-                  onChange={(e) => updateField("emeaIssuingBankDeclineRate", parseFloat(e.target.value))}
+                  value={formData.emeaIssuingBankDeclineRate ?? ""}
+                  onChange={(e) => updateField("emeaIssuingBankDeclineRate", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -318,8 +318,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="emea3DSRate"
                   type="number"
-                  value={formData.emea3DSChallengeRate || ""}
-                  onChange={(e) => updateField("emea3DSChallengeRate", parseFloat(e.target.value))}
+                  value={formData.emea3DSChallengeRate ?? ""}
+                  onChange={(e) => updateField("emea3DSChallengeRate", parseFloat(e.target.value) || 0)}
                 />
                 <p className="text-xs text-muted-foreground">% of transactions requiring 3DS challenge</p>
               </div>
@@ -329,8 +329,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="emea3DSAbandonment"
                   type="number"
-                  value={formData.emea3DSAbandonmentRate || ""}
-                  onChange={(e) => updateField("emea3DSAbandonmentRate", parseFloat(e.target.value))}
+                  value={formData.emea3DSAbandonmentRate ?? ""}
+                  onChange={(e) => updateField("emea3DSAbandonmentRate", parseFloat(e.target.value) || 0)}
                   step="0.1"
                 />
                 <p className="text-xs text-muted-foreground">% of 3DS challenged transactions that are abandoned</p>
@@ -341,8 +341,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="emeaManualReview"
                   type="number"
-                  value={formData.emeaManualReviewRate || ""}
-                  onChange={(e) => updateField("emeaManualReviewRate", parseFloat(e.target.value))}
+                  value={formData.emeaManualReviewRate ?? ""}
+                  onChange={(e) => updateField("emeaManualReviewRate", parseFloat(e.target.value) || 0)}
                 />
                 <p className="text-xs text-muted-foreground">% of transactions requiring manual review</p>
               </div>
@@ -357,8 +357,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="apacGMV"
                   type="number"
-                  value={formData.apacAnnualGMV || ""}
-                  onChange={(e) => updateField("apacAnnualGMV", parseFloat(e.target.value))}
+                  value={formData.apacAnnualGMV ?? ""}
+                  onChange={(e) => updateField("apacAnnualGMV", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -367,8 +367,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="apacMargin"
                   type="number"
-                  value={formData.apacGrossMarginPercent || ""}
-                  onChange={(e) => updateField("apacGrossMarginPercent", parseFloat(e.target.value))}
+                  value={formData.apacGrossMarginPercent ?? ""}
+                  onChange={(e) => updateField("apacGrossMarginPercent", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -396,8 +396,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                   <Input
                     id="apacPreAuth"
                     type="number"
-                    value={formData.apacPreAuthApprovalRate || ""}
-                    onChange={(e) => updateField("apacPreAuthApprovalRate", parseFloat(e.target.value))}
+                    value={formData.apacPreAuthApprovalRate ?? ""}
+                    onChange={(e) => updateField("apacPreAuthApprovalRate", parseFloat(e.target.value) || 0)}
                   />
                 </div>
               )}
@@ -408,8 +408,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                   <Input
                     id="apacPostAuth"
                     type="number"
-                    value={formData.apacPostAuthApprovalRate || ""}
-                    onChange={(e) => updateField("apacPostAuthApprovalRate", parseFloat(e.target.value))}
+                    value={formData.apacPostAuthApprovalRate ?? ""}
+                    onChange={(e) => updateField("apacPostAuthApprovalRate", parseFloat(e.target.value) || 0)}
                   />
                 </div>
               )}
@@ -419,8 +419,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="apacBankDecline"
                   type="number"
-                  value={formData.apacIssuingBankDeclineRate || ""}
-                  onChange={(e) => updateField("apacIssuingBankDeclineRate", parseFloat(e.target.value))}
+                  value={formData.apacIssuingBankDeclineRate ?? ""}
+                  onChange={(e) => updateField("apacIssuingBankDeclineRate", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -429,8 +429,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="apac3DSRate"
                   type="number"
-                  value={formData.apac3DSChallengeRate || ""}
-                  onChange={(e) => updateField("apac3DSChallengeRate", parseFloat(e.target.value))}
+                  value={formData.apac3DSChallengeRate ?? ""}
+                  onChange={(e) => updateField("apac3DSChallengeRate", parseFloat(e.target.value) || 0)}
                 />
                 <p className="text-xs text-muted-foreground">% of transactions requiring 3DS challenge</p>
               </div>
@@ -440,8 +440,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="apac3DSAbandonment"
                   type="number"
-                  value={formData.apac3DSAbandonmentRate || ""}
-                  onChange={(e) => updateField("apac3DSAbandonmentRate", parseFloat(e.target.value))}
+                  value={formData.apac3DSAbandonmentRate ?? ""}
+                  onChange={(e) => updateField("apac3DSAbandonmentRate", parseFloat(e.target.value) || 0)}
                   step="0.1"
                 />
                 <p className="text-xs text-muted-foreground">% of 3DS challenged transactions that are abandoned</p>
@@ -452,8 +452,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="apacManualReview"
                   type="number"
-                  value={formData.apacManualReviewRate || ""}
-                  onChange={(e) => updateField("apacManualReviewRate", parseFloat(e.target.value))}
+                  value={formData.apacManualReviewRate ?? ""}
+                  onChange={(e) => updateField("apacManualReviewRate", parseFloat(e.target.value) || 0)}
                 />
                 <p className="text-xs text-muted-foreground">% of transactions requiring manual review</p>
               </div>
@@ -468,10 +468,9 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="fraudCBRate"
                   type="number"
-                  placeholder="0.8"
                   step="0.01"
-                  value={formData.fraudCBRate || ""}
-                  onChange={(e) => updateField("fraudCBRate", parseFloat(e.target.value))}
+                  value={formData.fraudCBRate ?? ""}
+                  onChange={(e) => updateField("fraudCBRate", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -480,9 +479,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="fraudCBAOV"
                   type="number"
-                  placeholder="158"
-                  value={formData.fraudCBAOV || ""}
-                  onChange={(e) => updateField("fraudCBAOV", parseFloat(e.target.value))}
+                  value={formData.fraudCBAOV ?? ""}
+                  onChange={(e) => updateField("fraudCBAOV", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -491,10 +489,9 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="serviceCBRate"
                   type="number"
-                  placeholder="0.5"
                   step="0.01"
-                  value={formData.serviceCBRate || ""}
-                  onChange={(e) => updateField("serviceCBRate", parseFloat(e.target.value))}
+                  value={formData.serviceCBRate ?? ""}
+                  onChange={(e) => updateField("serviceCBRate", parseFloat(e.target.value) || 0)}
                 />
               </div>
 
@@ -503,9 +500,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Input
                   id="serviceCBAOV"
                   type="number"
-                  placeholder="158"
-                  value={formData.serviceCBAOV || ""}
-                  onChange={(e) => updateField("serviceCBAOV", parseFloat(e.target.value))}
+                  value={formData.serviceCBAOV ?? ""}
+                  onChange={(e) => updateField("serviceCBAOV", parseFloat(e.target.value) || 0)}
                 />
               </div>
             </div>

@@ -80,13 +80,13 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const futureAmerCompleteRate = futureAmerBankApproval * (forterKPIs.fraudApprovalRate / 100) * threeDSApprovalImpact * manualReviewImpact;
 
     // EMEA calculations
-    const emeaBankDeclineRate = (data.emeaIssuingBankDeclineRate || 5) / 100;
+    const emeaBankDeclineRate = (data.emeaIssuingBankDeclineRate ?? 5) / 100;
     const emeaBankApproval = 1 - emeaBankDeclineRate;
-    const emeaFraudApproval = (data.emeaPreAuthApprovalRate || 95) / 100;
+    const emeaFraudApproval = (data.emeaPreAuthApprovalRate ?? 95) / 100;
     
-    const emea3DSRate = (data.emea3DSChallengeRate || 0) / 100;
+    const emea3DSRate = (data.emea3DSChallengeRate ?? 0) / 100;
     const emeaAbandonmentRate = getAbandonmentRate('emea');
-    const emeaManualReviewRate = (data.emeaManualReviewRate || 0) / 100;
+    const emeaManualReviewRate = (data.emeaManualReviewRate ?? 0) / 100;
     const currentEmeaCompleteRate = emeaBankApproval * emeaFraudApproval * (1 - emea3DSRate * emeaAbandonmentRate) * (1 - emeaManualReviewRate * 0.03);
     
     const futureEmeaBankDeclineRate = emeaBankDeclineRate * (1 - bankDeclineImprovement);
@@ -110,16 +110,16 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const futureEmeaCompleteRate = futureEmeaBankApproval * (forterKPIs.fraudApprovalRate / 100) * emea3DSApprovalImpact * emeaManualReviewImpact;
 
     // APAC calculations
-    const apacBankDeclineRate = (data.apacIssuingBankDeclineRate || 7) / 100;
+    const apacBankDeclineRate = (data.apacIssuingBankDeclineRate ?? 7) / 100;
     const apacBankApproval = 1 - apacBankDeclineRate;
     const apacFraudApproval =
       data.apacFraudCheckTiming === "pre-auth"
-        ? (data.apacPreAuthApprovalRate || 95) / 100
-        : (data.apacPostAuthApprovalRate || 98.5) / 100;
+        ? (data.apacPreAuthApprovalRate ?? 95) / 100
+        : (data.apacPostAuthApprovalRate ?? 98.5) / 100;
     
-    const apac3DSRate = (data.apac3DSChallengeRate || 0) / 100;
+    const apac3DSRate = (data.apac3DSChallengeRate ?? 0) / 100;
     const apacAbandonmentRate = getAbandonmentRate('apac');
-    const apacManualReviewRate = (data.apacManualReviewRate || 0) / 100;
+    const apacManualReviewRate = (data.apacManualReviewRate ?? 0) / 100;
     const currentApacCompleteRate = apacBankApproval * apacFraudApproval * (1 - apac3DSRate * apacAbandonmentRate) * (1 - apacManualReviewRate * 0.03);
     
     const futureApacBankDeclineRate = apacBankDeclineRate * (1 - bankDeclineImprovement);
@@ -149,7 +149,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const totalGMVUplift = amerGMVUplift + emeaGMVUplift + apacGMVUplift;
 
     // Chargeback calculations
-    const currentChargebacks = totalRevenue * ((data.fraudCBRate || 0.8) / 100);
+    const currentChargebacks = totalRevenue * ((data.fraudCBRate ?? 0.8) / 100);
     const reductionRate = forterKPIs.chargebackReduction / 100;
     const futureChargebacks = currentChargebacks * (1 - reductionRate);
     const chargebackSavings = currentChargebacks - futureChargebacks;
