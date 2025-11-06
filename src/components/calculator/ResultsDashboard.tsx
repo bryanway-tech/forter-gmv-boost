@@ -20,6 +20,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
   const [breakdownData, setBreakdownData] = useState<{
     title: string;
     calculations: any[];
+    columns?: string[];
   }>({ title: "", calculations: [] });
 
   const forterKPIs = data.forterKPIs || defaultForterKPIs;
@@ -287,102 +288,288 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
   };
 
   const showGMVBreakdown = () => {
-    const calculations = [];
+    const calculations: any[] = [];
     
-    // Helper to add regional breakdown with detailed 3DS flow
+    // Helper to calculate AOV for the region
+    const getAOV = (revenue: number) => {
+      // Using simple AOV calculation - default $105 as per Excel template
+      return 105;
+    };
+    
+    // Helper to add regional breakdown with three-column format
     const addRegionalBreakdown = (region: 'AMER' | 'EMEA' | 'APAC', revenue: number, uplift: number) => {
       const regionData = region === 'AMER' ? metrics.amer : region === 'EMEA' ? metrics.emea : metrics.apac;
+      const aov = getAOV(revenue);
+      const creditCardPercent = 1.0; // Assuming 100% credit card for now
       
       // Add section header
       calculations.push({ 
-        label: `━━━━━ ${region} Region ━━━━━`, 
-        value: "", 
+        label: `${region === 'AMER' ? 'AMER+APAC - Non-EEA' : region === 'EMEA' ? 'EMEA - EEA PSD2' : 'APAC'} - Optimize payments flow`, 
+        currentValue: "Current", 
+        impactValue: "Impact",
+        forterValue: "Forter",
         isHeader: true 
       });
       
       // 1. Pre-Auth Fraud Decisioning
       calculations.push(
-        { label: "1. PRE-AUTH FRAUD DECISIONING", value: "", isSubheader: true },
-        { label: "   Non-EEA eCommerce gross sales attempts ($)", value: formatCurrency(revenue) },
-        { label: "   Transaction average order value ($)", value: formatCurrency(revenue / 1) },
-        { label: "   Pre-Auth fraud approval rate (%)", value: `${(regionData.rates.fraud * 100).toFixed(2)}%` },
-        { label: "   Pre-Auth fraud approved sales ($)", value: formatCurrency(regionData.current.fraudApproved), formula: `${formatCurrency(revenue)} × ${(regionData.rates.fraud * 100).toFixed(2)}%` }
+        { 
+          label: "1. Pre-Auth Fraud Decisioning", 
+          currentValue: "", 
+          impactValue: "",
+          forterValue: "",
+          isSubheader: true 
+        },
+        { 
+          label: "Non-EEA eCommerce gross sales attempts (#)", 
+          currentValue: Math.round(revenue / aov),
+          impactValue: "",
+          forterValue: Math.round(revenue / aov)
+        },
+        { 
+          label: "Non-EEA eCommerce gross sales attempts ($)", 
+          currentValue: formatCurrency(revenue),
+          impactValue: "",
+          forterValue: formatCurrency(revenue)
+        },
+        { 
+          label: "Transaction average order value ($)", 
+          currentValue: formatCurrency(aov),
+          impactValue: "",
+          forterValue: formatCurrency(aov)
+        },
+        { 
+          label: "Pre-Auth fraud approval rate (%)", 
+          currentValue: `${(regionData.rates.fraud * 100).toFixed(2)}%`,
+          impactValue: `${((regionData.futureRates.fraud - regionData.rates.fraud) * 100).toFixed(2)}%`,
+          forterValue: `${(regionData.futureRates.fraud * 100).toFixed(2)}%`
+        },
+        { 
+          label: "Pre-Auth fraud approved sales (#)", 
+          currentValue: Math.round(regionData.current.fraudApproved / aov),
+          impactValue: Math.round((regionData.future.fraudApproved - regionData.current.fraudApproved) / aov),
+          forterValue: Math.round(regionData.future.fraudApproved / aov)
+        },
+        { 
+          label: "Pre-Auth fraud approved sales ($)", 
+          currentValue: formatCurrency(regionData.current.fraudApproved),
+          impactValue: formatCurrency(regionData.future.fraudApproved - regionData.current.fraudApproved),
+          forterValue: formatCurrency(regionData.future.fraudApproved)
+        }
       );
       
-      // 2. AMER/APAC 3DS Flow (detailed breakdown matching spreadsheet)
+      // 2. 3DS Flow
       calculations.push(
-        { label: "2. AMER+APAC 3DS Flow", value: "", isSubheader: true },
-        { label: "   Transactions going through 3DS (%)", value: `${(regionData.rates.threeds * 100).toFixed(2)}%` },
-        { label: "   Credit card transactions sent to 3DS (#)", value: Math.round(regionData.current.to3DS / (revenue / 1)) },
-        { label: "   Credit card transactions sent to 3DS ($)", value: formatCurrency(regionData.current.to3DS) },
-        { label: "   Transactions 3DS failure and abandonment rate (%)", value: `${(regionData.rates.abandonment * 100).toFixed(2)}%` },
-        { label: "   3DS failure and abandonment transactions (#)", value: Math.round(regionData.current.abandoned3DS / (revenue / 1)) },
-        { label: "   3DS failure and abandonment transactions ($)", value: formatCurrency(regionData.current.abandoned3DS) },
-        { label: "   Post-3DS success sent to authorization (#)", value: Math.round(regionData.current.post3DS / (revenue / 1)) },
-        { label: "   Exempt credit card transactions (#)", value: Math.round(regionData.current.exempt3DS / (revenue / 1)) },
-        { label: "   Exempt credit card transactions ($)", value: formatCurrency(regionData.current.exempt3DS) },
-        { label: "   Total post-3DS success sent to authorization (#)", value: Math.round(regionData.current.toAuth / (revenue / 1)) },
-        { label: "   Total post-3DS success sent to authorization ($)", value: formatCurrency(regionData.current.toAuth) }
+        { 
+          label: `2. ${region} 3DS Flow`, 
+          currentValue: "", 
+          impactValue: "",
+          forterValue: "",
+          isSubheader: true 
+        },
+        { 
+          label: "Credit card transactions (%)", 
+          currentValue: `${(creditCardPercent * 100).toFixed(2)}%`,
+          impactValue: "",
+          forterValue: `${(creditCardPercent * 100).toFixed(2)}%`
+        },
+        { 
+          label: "Transactions going through 3DS (%)", 
+          currentValue: `${(regionData.rates.threeds * 100).toFixed(2)}%`,
+          impactValue: `${((regionData.futureRates.threeds - regionData.rates.threeds) * 100).toFixed(2)}%`,
+          forterValue: `${(regionData.futureRates.threeds * 100).toFixed(2)}%`
+        },
+        { 
+          label: "Credit card transactions sent to 3DS (#)", 
+          currentValue: Math.round(regionData.current.to3DS / aov),
+          impactValue: Math.round((regionData.future.to3DS - regionData.current.to3DS) / aov),
+          forterValue: Math.round(regionData.future.to3DS / aov)
+        },
+        { 
+          label: "Credit card transactions sent to 3DS ($)", 
+          currentValue: formatCurrency(regionData.current.to3DS),
+          impactValue: formatCurrency(regionData.future.to3DS - regionData.current.to3DS),
+          forterValue: formatCurrency(regionData.future.to3DS)
+        },
+        { 
+          label: "Transaction 3DS failure and abandonment rate (%)", 
+          currentValue: `${(regionData.rates.abandonment * 100).toFixed(2)}%`,
+          impactValue: `${((regionData.futureRates.abandonment - regionData.rates.abandonment) * 100).toFixed(2)}%`,
+          forterValue: `${(regionData.futureRates.abandonment * 100).toFixed(2)}%`
+        },
+        { 
+          label: "3DS failure and abandonment transactions (#)", 
+          currentValue: Math.round(regionData.current.abandoned3DS / aov),
+          impactValue: Math.round((regionData.future.abandoned3DS - regionData.current.abandoned3DS) / aov),
+          forterValue: Math.round(regionData.future.abandoned3DS / aov)
+        },
+        { 
+          label: "3DS failure and abandonment transactions ($)", 
+          currentValue: formatCurrency(regionData.current.abandoned3DS),
+          impactValue: formatCurrency(regionData.future.abandoned3DS - regionData.current.abandoned3DS),
+          forterValue: formatCurrency(regionData.future.abandoned3DS)
+        },
+        { 
+          label: "3DS exempt successful (#)", 
+          currentValue: Math.round(regionData.current.post3DS / aov),
+          impactValue: Math.round((regionData.future.post3DS - regionData.current.post3DS) / aov),
+          forterValue: Math.round(regionData.future.post3DS / aov)
+        },
+        { 
+          label: "Exempt credit card transactions (#)", 
+          currentValue: Math.round(regionData.current.exempt3DS / aov),
+          impactValue: Math.round((regionData.future.exempt3DS - regionData.current.exempt3DS) / aov),
+          forterValue: Math.round(regionData.future.exempt3DS / aov)
+        },
+        { 
+          label: "Exempt credit card transactions ($)", 
+          currentValue: formatCurrency(regionData.current.exempt3DS),
+          impactValue: formatCurrency(regionData.future.exempt3DS - regionData.current.exempt3DS),
+          forterValue: formatCurrency(regionData.future.exempt3DS)
+        },
+        { 
+          label: "Total post-3DS success sent to authorization (#)", 
+          currentValue: Math.round(regionData.current.toAuth / aov),
+          impactValue: Math.round((regionData.future.toAuth - regionData.current.toAuth) / aov),
+          forterValue: Math.round(regionData.future.toAuth / aov)
+        },
+        { 
+          label: "Total post-3DS success sent to authorization ($)", 
+          currentValue: formatCurrency(regionData.current.toAuth),
+          impactValue: formatCurrency(regionData.future.toAuth - regionData.current.toAuth),
+          forterValue: formatCurrency(regionData.future.toAuth)
+        }
       );
       
-      // 3. Issuing Bank Authorization
+      // 3. Issuing Bank
+      const currentBankDeclines = regionData.current.toAuth * (1 - regionData.rates.bank);
+      const futureBankDeclines = regionData.future.toAuth * (1 - regionData.futureRates.bank);
+      
       calculations.push(
-        { label: "3. Issuing Bank Decisioning", value: "", isSubheader: true },
-        { label: "   Declined transactions by issuing bank (%)", value: `${((1 - regionData.rates.bank) * 100).toFixed(2)}%` },
-        { label: "   Issuing bank declines ($)", value: formatCurrency(regionData.current.toAuth * (1 - regionData.rates.bank)) },
-        { label: "   Post Auth fraud approved sales ($)", value: formatCurrency(regionData.current.bankApproved) }
+        { 
+          label: "3. Issuing Bank", 
+          currentValue: "", 
+          impactValue: "",
+          forterValue: "",
+          isSubheader: true 
+        },
+        { 
+          label: "Declined transactions by issuing bank (%)", 
+          currentValue: `${((1 - regionData.rates.bank) * 100).toFixed(2)}%`,
+          impactValue: `${(((1 - regionData.futureRates.bank) - (1 - regionData.rates.bank)) * 100).toFixed(2)}%`,
+          forterValue: `${((1 - regionData.futureRates.bank) * 100).toFixed(2)}%`
+        },
+        { 
+          label: "Issuing bank declines (#)", 
+          currentValue: Math.round(currentBankDeclines / aov),
+          impactValue: Math.round((futureBankDeclines - currentBankDeclines) / aov),
+          forterValue: Math.round(futureBankDeclines / aov)
+        },
+        { 
+          label: "Issuing bank declines ($)", 
+          currentValue: formatCurrency(currentBankDeclines),
+          impactValue: formatCurrency(futureBankDeclines - currentBankDeclines),
+          forterValue: formatCurrency(futureBankDeclines)
+        },
+        { 
+          label: "Post Auth fraud approved sales (#)", 
+          currentValue: Math.round(regionData.current.bankApproved / aov),
+          impactValue: Math.round((regionData.future.bankApproved - regionData.current.bankApproved) / aov),
+          forterValue: Math.round(regionData.future.bankApproved / aov)
+        },
+        { 
+          label: "Post Auth fraud approved sales ($)", 
+          currentValue: formatCurrency(regionData.current.bankApproved),
+          impactValue: formatCurrency(regionData.future.bankApproved - regionData.current.bankApproved),
+          forterValue: formatCurrency(regionData.future.bankApproved)
+        }
       );
       
-      // 4. Manual Review (if applicable)
-      if (regionData.rates.manualReview > 0) {
-        calculations.push(
-          { label: "4. Post-Auth Fraud Decisioning", value: "", isSubheader: true },
-          { label: "   Post Auth Fraud approval rate (%)", value: "100.00%" },
-          { label: "   Post Auth fraud approved sales (#)", value: Math.round(regionData.current.bankApproved / (revenue / 1)) },
-          { label: "   Post Auth fraud approved sales ($)", value: formatCurrency(regionData.current.bankApproved) }
-        );
-        
-        calculations.push(
-          { label: "5. Alternative Payment Methods", value: "", isSubheader: true },
-          { label: "   Alternative payment methods transaction (%)", value: "0.00%" },
-          { label: "   Alternative payment methods approved sales (#)", value: "0" },
-          { label: "   Alternative payment methods approved sales ($)", value: "$0" }
-        );
-      }
-      
-      // Current State Summary
+      // 4. Post-Auth Fraud Decisioning (always 100% in current logic)
       calculations.push(
-        { label: "CURRENT STATE SUMMARY", value: "", isSubheader: true },
-        { label: "   Total non-EEA sales completion (in-scope) (#)", value: Math.round(regionData.current.completed / (revenue / 1)) },
-        { label: "   Total non-EEA sales completion (in-scope) ($)", value: formatCurrency(regionData.current.completed) },
-        { label: "   Total non-EEA sales completion (in-scope, deduped) ($)", value: formatCurrency(regionData.current.completed) },
-        { label: "   Completion rate (%)", value: `${(regionData.current.completed / revenue * 100).toFixed(2)}%` }
+        { 
+          label: "4. Post-Auth Fraud Decisioning", 
+          currentValue: "", 
+          impactValue: "",
+          forterValue: "",
+          isSubheader: true 
+        },
+        { 
+          label: "Post Auth Fraud approval rate (%)", 
+          currentValue: "100.00%",
+          impactValue: "0.00%",
+          forterValue: "100.00%"
+        },
+        { 
+          label: "Post Auth fraud approved sales (#)", 
+          currentValue: Math.round(regionData.current.bankApproved / aov),
+          impactValue: Math.round((regionData.future.bankApproved - regionData.current.bankApproved) / aov),
+          forterValue: Math.round(regionData.future.bankApproved / aov)
+        },
+        { 
+          label: "Post Auth fraud approved sales ($)", 
+          currentValue: formatCurrency(regionData.current.bankApproved),
+          impactValue: formatCurrency(regionData.future.bankApproved - regionData.current.bankApproved),
+          forterValue: formatCurrency(regionData.future.bankApproved)
+        }
       );
       
-      // Future State with Forter
+      // 5. Alternative Payment Methods (assuming 0% for now)
       calculations.push(
-        { label: "FORTER STATE", value: "", isHeader: true },
-        { label: "   Pre-Auth fraud approval rate (%)", value: `${(regionData.futureRates.fraud * 100).toFixed(2)}%` },
-        { label: "   Pre-Auth fraud approved sales ($)", value: formatCurrency(regionData.future.fraudApproved) },
-        { label: "   Transactions going through 3DS (%)", value: `${(regionData.futureRates.threeds * 100).toFixed(2)}%` },
-        { label: "   Credit card transactions sent to 3DS ($)", value: formatCurrency(regionData.future.to3DS) },
-        { label: "   3DS abandonment rate (%)", value: `${(regionData.futureRates.abandonment * 100).toFixed(2)}%` },
-        { label: "   3DS abandonment ($)", value: formatCurrency(regionData.future.abandoned3DS) },
-        { label: "   Total to authorization ($)", value: formatCurrency(regionData.future.toAuth) },
-        { label: "   Declined transactions by issuing bank (%)", value: `${((1 - regionData.futureRates.bank) * 100).toFixed(2)}%` },
-        { label: "   Post Auth approved sales ($)", value: formatCurrency(regionData.future.bankApproved) },
-        { label: "   Forter Completion ($)", value: formatCurrency(regionData.future.completed) },
-        { label: "   Forter Completion Rate (%)", value: `${(regionData.future.completed / revenue * 100).toFixed(2)}%` }
+        { 
+          label: "5. Alternative Payment Methods", 
+          currentValue: "", 
+          impactValue: "",
+          forterValue: "",
+          isSubheader: true 
+        },
+        { 
+          label: "Alternative payment means (non-credit card) transactions (%)", 
+          currentValue: "0.00%",
+          impactValue: "",
+          forterValue: "0.00%"
+        },
+        { 
+          label: "Alternative payment methods (non-credit card) transactions (#)", 
+          currentValue: "0",
+          impactValue: "0",
+          forterValue: "0"
+        },
+        { 
+          label: "Alternative payment methods (non-credit card) transactions ($)", 
+          currentValue: "$0",
+          impactValue: "$0",
+          forterValue: "$0"
+        },
+        { 
+          label: "Total non-EEA sales completion (in-scope) (#)", 
+          currentValue: Math.round(regionData.current.completed / aov),
+          impactValue: Math.round((regionData.future.completed - regionData.current.completed) / aov),
+          forterValue: Math.round(regionData.future.completed / aov)
+        },
+        { 
+          label: "Total non-EEA sales completion (in-scope) ($)", 
+          currentValue: formatCurrency(regionData.current.completed),
+          impactValue: formatCurrency(regionData.future.completed - regionData.current.completed),
+          forterValue: formatCurrency(regionData.future.completed)
+        },
+        { 
+          label: "Total non-EEA sales completion (in-scope) - deduped ($)", 
+          currentValue: formatCurrency(regionData.current.completed),
+          impactValue: formatCurrency(regionData.future.completed - regionData.current.completed),
+          forterValue: formatCurrency(regionData.future.completed)
+        },
+        { 
+          label: "Completion rate (%)", 
+          currentValue: `${((regionData.current.completed / revenue) * 100).toFixed(2)}%`,
+          impactValue: `${(((regionData.future.completed / revenue) - (regionData.current.completed / revenue)) * 100).toFixed(2)}%`,
+          forterValue: `${((regionData.future.completed / revenue) * 100).toFixed(2)}%`,
+          isResult: true
+        }
       );
-      
-      calculations.push({
-        label: "   GMV Uplift",
-        value: formatCurrency(uplift),
-        formula: `${formatCurrency(regionData.future.completed)} - ${formatCurrency(regionData.current.completed)}`,
-        isResult: true
-      });
     };
 
+    // Add breakdown for each active region
     if (data.amerAnnualGMV) {
       addRegionalBreakdown('AMER', metrics.amerRevenue, metrics.amerGMVUplift);
     }
@@ -395,20 +582,27 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
       addRegionalBreakdown('APAC', metrics.apacRevenue, metrics.apacGMVUplift);
     }
 
+    // Total GMV Uplift Summary
     calculations.push({ 
       label: "━━━━━━━━━━━━━━━━━", 
-      value: "", 
+      currentValue: "", 
+      impactValue: "",
+      forterValue: "",
       isHeader: true 
     });
+    
     calculations.push({
       label: "TOTAL GMV UPLIFT",
-      value: metrics.totalGMVUplift,
+      currentValue: formatCurrency(metrics.totalRevenue - (metrics.totalRevenue - metrics.totalGMVUplift)),
+      impactValue: formatCurrency(metrics.totalGMVUplift),
+      forterValue: formatCurrency(metrics.totalRevenue),
       isResult: true,
     });
 
     setBreakdownData({
       title: "GMV Uplift - Detailed Calculation",
       calculations,
+      columns: ["Current", "Impact", "Forter"]
     });
     setBreakdownOpen(true);
   };
@@ -943,6 +1137,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
         open={breakdownOpen}
         onOpenChange={setBreakdownOpen}
         title={breakdownData.title}
+        columns={breakdownData.columns}
         calculations={breakdownData.calculations}
       />
     </div>
