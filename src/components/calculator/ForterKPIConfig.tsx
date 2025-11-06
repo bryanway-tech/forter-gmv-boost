@@ -2,6 +2,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Switch } from "@/components/ui/switch";
+import { useState } from "react";
 
 export type ForterKPIs = {
   fraudApprovalRate: number; // Default 99%
@@ -15,6 +17,10 @@ export type ForterKPIs = {
   timePerReviewReduction: number; // Default 80%
   threeDSChallengeReduction: number; // Default 30%
   threeDSAbandonmentImprovement: number; // Default 2%
+  // Toggle states for input modes
+  threeDSChallengeIsAbsolute?: boolean;
+  threeDSAbandonmentIsAbsolute?: boolean;
+  manualReviewIsAbsolute?: boolean;
 };
 
 interface ForterKPIConfigProps {
@@ -37,8 +43,36 @@ export const defaultForterKPIs: ForterKPIs = {
 };
 
 export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
-  const updateKPI = (field: keyof ForterKPIs, value: number) => {
+  const [threeDSChallengeMode, setThreeDSChallengeMode] = useState<'reduction' | 'absolute'>(
+    kpis.threeDSChallengeIsAbsolute ? 'absolute' : 'reduction'
+  );
+  const [threeDSAbandonmentMode, setThreeDSAbandonmentMode] = useState<'reduction' | 'absolute'>(
+    kpis.threeDSAbandonmentIsAbsolute ? 'absolute' : 'reduction'
+  );
+  const [manualReviewMode, setManualReviewMode] = useState<'reduction' | 'absolute'>(
+    kpis.manualReviewIsAbsolute ? 'absolute' : 'reduction'
+  );
+
+  const updateKPI = (field: keyof ForterKPIs, value: number | boolean) => {
     onUpdate({ ...kpis, [field]: value });
+  };
+
+  const toggleThreeDSChallengeMode = (checked: boolean) => {
+    const newMode = checked ? 'absolute' : 'reduction';
+    setThreeDSChallengeMode(newMode);
+    updateKPI('threeDSChallengeIsAbsolute', checked);
+  };
+
+  const toggleThreeDSAbandonmentMode = (checked: boolean) => {
+    const newMode = checked ? 'absolute' : 'reduction';
+    setThreeDSAbandonmentMode(newMode);
+    updateKPI('threeDSAbandonmentIsAbsolute', checked);
+  };
+
+  const toggleManualReviewMode = (checked: boolean) => {
+    const newMode = checked ? 'absolute' : 'reduction';
+    setManualReviewMode(newMode);
+    updateKPI('manualReviewIsAbsolute', checked);
   };
 
   return (
@@ -153,7 +187,19 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="threeDSReduction">3DS Challenge Reduction (%)</Label>
+                  <div className="flex items-center justify-between gap-4">
+                    <Label htmlFor="threeDSReduction">
+                      {threeDSChallengeMode === 'reduction' ? '3DS Challenge Reduction (%)' : 'Post-Forter 3DS Challenge Rate (%)'}
+                    </Label>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">Reduction %</span>
+                      <Switch
+                        checked={threeDSChallengeMode === 'absolute'}
+                        onCheckedChange={toggleThreeDSChallengeMode}
+                      />
+                      <span className="text-muted-foreground">Absolute Rate</span>
+                    </div>
+                  </div>
                   <Input
                     id="threeDSReduction"
                     type="number"
@@ -162,12 +208,26 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
                     onChange={(e) => updateKPI("threeDSChallengeReduction", parseFloat(e.target.value))}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Reduction in 3DS challenge rate
+                    {threeDSChallengeMode === 'reduction' 
+                      ? 'Reduction in 3DS challenge rate' 
+                      : 'Target 3DS challenge rate after Forter implementation'}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="threeDSAbandonment">3DS Abandonment Improvement (%)</Label>
+                  <div className="flex items-center justify-between gap-4">
+                    <Label htmlFor="threeDSAbandonment">
+                      {threeDSAbandonmentMode === 'reduction' ? '3DS Abandonment Improvement (%)' : 'Post-Forter 3DS Abandonment Rate (%)'}
+                    </Label>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">Improvement %</span>
+                      <Switch
+                        checked={threeDSAbandonmentMode === 'absolute'}
+                        onCheckedChange={toggleThreeDSAbandonmentMode}
+                      />
+                      <span className="text-muted-foreground">Absolute Rate</span>
+                    </div>
+                  </div>
                   <Input
                     id="threeDSAbandonment"
                     type="number"
@@ -176,12 +236,26 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
                     onChange={(e) => updateKPI("threeDSAbandonmentImprovement", parseFloat(e.target.value))}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Reduction in abandonment rate for 3DS challenged transactions
+                    {threeDSAbandonmentMode === 'reduction'
+                      ? 'Reduction in abandonment rate for 3DS challenged transactions'
+                      : 'Target abandonment rate after Forter implementation'}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="manualReviewReduction">Manual Review Reduction (%)</Label>
+                  <div className="flex items-center justify-between gap-4">
+                    <Label htmlFor="manualReviewReduction">
+                      {manualReviewMode === 'reduction' ? 'Manual Review Reduction (%)' : 'Post-Forter Manual Review Rate (%)'}
+                    </Label>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">Reduction %</span>
+                      <Switch
+                        checked={manualReviewMode === 'absolute'}
+                        onCheckedChange={toggleManualReviewMode}
+                      />
+                      <span className="text-muted-foreground">Absolute Rate</span>
+                    </div>
+                  </div>
                   <Input
                     id="manualReviewReduction"
                     type="number"
@@ -190,7 +264,9 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
                     onChange={(e) => updateKPI("manualReviewReduction", parseFloat(e.target.value))}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Reduction in transactions requiring manual review
+                    {manualReviewMode === 'reduction'
+                      ? 'Reduction in transactions requiring manual review'
+                      : 'Target manual review rate after Forter implementation'}
                   </p>
                 </div>
               </div>

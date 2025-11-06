@@ -59,16 +59,22 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const futureAmerBankDeclineRate = amerBankDeclineRate * (1 - bankDeclineImprovement);
     const futureAmerBankApproval = Math.min(0.99, 1 - futureAmerBankDeclineRate);
     
-    // Apply 3DS optimization
-    const forter3DSReduction = forterKPIs.threeDSChallengeReduction / 100;
-    const futureAmer3DSRate = amer3DSRate * (1 - forter3DSReduction);
-    const forterAbandonmentImprovement = forterKPIs.threeDSAbandonmentImprovement / 100;
-    const futureAmerAbandonmentRate = Math.max(0, amerAbandonmentRate - forterAbandonmentImprovement);
+    // Apply 3DS optimization - check if absolute or reduction mode
+    const futureAmer3DSRate = forterKPIs.threeDSChallengeIsAbsolute
+      ? forterKPIs.threeDSChallengeReduction / 100
+      : amer3DSRate * (1 - forterKPIs.threeDSChallengeReduction / 100);
+      
+    const futureAmerAbandonmentRate = forterKPIs.threeDSAbandonmentIsAbsolute
+      ? forterKPIs.threeDSAbandonmentImprovement / 100
+      : Math.max(0, amerAbandonmentRate * (1 - forterKPIs.threeDSAbandonmentImprovement / 100));
+      
     const threeDSApprovalImpact = 1 - futureAmer3DSRate * futureAmerAbandonmentRate;
     
-    // Apply manual review reduction
-    const forterManualReviewReduction = forterKPIs.manualReviewReduction / 100;
-    const futureAmerManualReviewRate = amerManualReviewRate * (1 - forterManualReviewReduction);
+    // Apply manual review reduction - check if absolute or reduction mode
+    const futureAmerManualReviewRate = forterKPIs.manualReviewIsAbsolute
+      ? forterKPIs.manualReviewReduction / 100
+      : amerManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
+      
     const manualReviewImpact = 1 - futureAmerManualReviewRate * 0.02;
     
     const futureAmerCompleteRate = futureAmerBankApproval * (forterKPIs.fraudApprovalRate / 100) * threeDSApprovalImpact * manualReviewImpact;
@@ -85,10 +91,21 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     
     const futureEmeaBankDeclineRate = emeaBankDeclineRate * (1 - bankDeclineImprovement);
     const futureEmeaBankApproval = Math.min(0.99, 1 - futureEmeaBankDeclineRate);
-    const futureEmea3DSRate = emea3DSRate * (1 - forter3DSReduction);
-    const futureEmeaAbandonmentRate = Math.max(0, emeaAbandonmentRate - forterAbandonmentImprovement);
+    
+    const futureEmea3DSRate = forterKPIs.threeDSChallengeIsAbsolute
+      ? forterKPIs.threeDSChallengeReduction / 100
+      : emea3DSRate * (1 - forterKPIs.threeDSChallengeReduction / 100);
+      
+    const futureEmeaAbandonmentRate = forterKPIs.threeDSAbandonmentIsAbsolute
+      ? forterKPIs.threeDSAbandonmentImprovement / 100
+      : Math.max(0, emeaAbandonmentRate * (1 - forterKPIs.threeDSAbandonmentImprovement / 100));
+      
     const emea3DSApprovalImpact = 1 - futureEmea3DSRate * futureEmeaAbandonmentRate;
-    const futureEmeaManualReviewRate = emeaManualReviewRate * (1 - forterManualReviewReduction);
+    
+    const futureEmeaManualReviewRate = forterKPIs.manualReviewIsAbsolute
+      ? forterKPIs.manualReviewReduction / 100
+      : emeaManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
+      
     const emeaManualReviewImpact = 1 - futureEmeaManualReviewRate * 0.02;
     const futureEmeaCompleteRate = futureEmeaBankApproval * (forterKPIs.fraudApprovalRate / 100) * emea3DSApprovalImpact * emeaManualReviewImpact;
 
@@ -107,10 +124,21 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     
     const futureApacBankDeclineRate = apacBankDeclineRate * (1 - bankDeclineImprovement);
     const futureApacBankApproval = Math.min(0.99, 1 - futureApacBankDeclineRate);
-    const futureApac3DSRate = apac3DSRate * (1 - forter3DSReduction);
-    const futureApacAbandonmentRate = Math.max(0, apacAbandonmentRate - forterAbandonmentImprovement);
+    
+    const futureApac3DSRate = forterKPIs.threeDSChallengeIsAbsolute
+      ? forterKPIs.threeDSChallengeReduction / 100
+      : apac3DSRate * (1 - forterKPIs.threeDSChallengeReduction / 100);
+      
+    const futureApacAbandonmentRate = forterKPIs.threeDSAbandonmentIsAbsolute
+      ? forterKPIs.threeDSAbandonmentImprovement / 100
+      : Math.max(0, apacAbandonmentRate * (1 - forterKPIs.threeDSAbandonmentImprovement / 100));
+      
     const apac3DSApprovalImpact = 1 - futureApac3DSRate * futureApacAbandonmentRate;
-    const futureApacManualReviewRate = apacManualReviewRate * (1 - forterManualReviewReduction);
+    
+    const futureApacManualReviewRate = forterKPIs.manualReviewIsAbsolute
+      ? forterKPIs.manualReviewReduction / 100
+      : apacManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
+      
     const apacManualReviewImpact = 1 - futureApacManualReviewRate * 0.02;
     const futureApacCompleteRate = futureApacBankApproval * (forterKPIs.fraudApprovalRate / 100) * apac3DSApprovalImpact * apacManualReviewImpact;
 
