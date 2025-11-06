@@ -75,7 +75,7 @@ export const CalculationBreakdown = ({
           {isMultiColumn ? (
             <div className="space-y-2">
               {/* Column Headers */}
-              <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-3 items-center py-3 border-b-2 border-primary/20 font-semibold text-sm bg-muted/30 px-2 rounded-t sticky top-0 z-10">
+              <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-3 items-center py-4 border-b-2 border-primary/20 font-bold text-base bg-background px-2 rounded-t sticky top-0 z-10">
                 <div>Metric</div>
                 <div className="text-right">{columns[0]}</div>
                 <div className="text-right">{columns[1]}</div>
@@ -109,7 +109,7 @@ export const CalculationBreakdown = ({
                           </div>
                         )}
                       </div>
-                      <div className={`text-right ${calc.isResult ? "text-primary" : calc.isBad ? "text-destructive" : ""}`}>
+                      <div className="text-right text-foreground">
                         {formatValue(calc.currentValue)}
                       </div>
                       <div className={`text-right font-medium ${
@@ -125,7 +125,7 @@ export const CalculationBreakdown = ({
                       }`}>
                         {formatImpact(calc.impactValue)}
                       </div>
-                      <div className={`text-right ${calc.isResult ? "text-primary" : calc.isBad ? "text-destructive" : ""}`}>
+                      <div className="text-right text-foreground">
                         {formatValue(calc.forterValue)}
                       </div>
                     </div>

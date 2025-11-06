@@ -345,19 +345,22 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
           label: "Pre-Auth fraud approval rate (%)", 
           currentValue: `${(regionData.rates.fraud * 100).toFixed(2)}%`,
           impactValue: `${((regionData.futureRates.fraud / regionData.rates.fraud - 1) * 100).toFixed(2)}%`,
-          forterValue: `${(regionData.futureRates.fraud * 100).toFixed(2)}%`
+          forterValue: `${(regionData.futureRates.fraud * 100).toFixed(2)}%`,
+          isResult: true
         },
         { 
           label: "Pre-Auth fraud approved sales (#)", 
           currentValue: Math.round(regionData.current.fraudApproved / aov),
           impactValue: Math.round((regionData.future.fraudApproved - regionData.current.fraudApproved) / aov),
-          forterValue: Math.round(regionData.future.fraudApproved / aov)
+          forterValue: Math.round(regionData.future.fraudApproved / aov),
+          isResult: true
         },
         { 
           label: "Pre-Auth fraud approved sales ($)", 
           currentValue: formatCurrency(regionData.current.fraudApproved),
           impactValue: formatCurrency(regionData.future.fraudApproved - regionData.current.fraudApproved),
-          forterValue: formatCurrency(regionData.future.fraudApproved)
+          forterValue: formatCurrency(regionData.future.fraudApproved),
+          isResult: true
         }
       );
       
@@ -386,13 +389,15 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
           label: "Credit card transactions sent to 3DS (#)", 
           currentValue: Math.round(regionData.current.to3DS / aov),
           impactValue: Math.round((regionData.future.to3DS - regionData.current.to3DS) / aov),
-          forterValue: Math.round(regionData.future.to3DS / aov)
+          forterValue: Math.round(regionData.future.to3DS / aov),
+          isResult: true
         },
         { 
           label: "Credit card transactions sent to 3DS ($)", 
           currentValue: formatCurrency(regionData.current.to3DS),
           impactValue: formatCurrency(regionData.future.to3DS - regionData.current.to3DS),
-          forterValue: formatCurrency(regionData.future.to3DS)
+          forterValue: formatCurrency(regionData.future.to3DS),
+          isResult: true
         },
         { 
           label: "Transaction 3DS failure and abandonment rate (%)", 
@@ -405,14 +410,16 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
           currentValue: Math.round(regionData.current.abandoned3DS / aov),
           impactValue: Math.round((regionData.future.abandoned3DS - regionData.current.abandoned3DS) / aov),
           forterValue: Math.round(regionData.future.abandoned3DS / aov),
-          isBad: true
+          isBad: true,
+          isResult: true
         },
         { 
           label: "3DS failure and abandonment transactions ($)", 
           currentValue: formatCurrency(regionData.current.abandoned3DS),
           impactValue: formatCurrency(regionData.future.abandoned3DS - regionData.current.abandoned3DS),
           forterValue: formatCurrency(regionData.future.abandoned3DS),
-          isBad: true
+          isBad: true,
+          isResult: true
         },
         { 
           label: "3DS exempt successful (#)", 
@@ -436,7 +443,8 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
           label: "Total post-3DS success sent to authorization (#)", 
           currentValue: Math.round(regionData.current.toAuth / aov),
           impactValue: Math.round((regionData.future.toAuth - regionData.current.toAuth) / aov),
-          forterValue: Math.round(regionData.future.toAuth / aov)
+          forterValue: Math.round(regionData.future.toAuth / aov),
+          isResult: true
         },
         { 
           label: "Total post-3DS success sent to authorization ($)", 
@@ -470,26 +478,30 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
           currentValue: Math.round(currentBankDeclines / aov),
           impactValue: Math.round((futureBankDeclines - currentBankDeclines) / aov),
           forterValue: Math.round(futureBankDeclines / aov),
-          isBad: true
+          isBad: true,
+          isResult: true
         },
         { 
           label: "Issuing bank declines ($)", 
           currentValue: formatCurrency(currentBankDeclines),
           impactValue: formatCurrency(futureBankDeclines - currentBankDeclines),
           forterValue: formatCurrency(futureBankDeclines),
-          isBad: true
+          isBad: true,
+          isResult: true
         },
         { 
           label: "Post Auth fraud approved sales (#)", 
           currentValue: Math.round(regionData.current.bankApproved / aov),
           impactValue: Math.round((regionData.future.bankApproved - regionData.current.bankApproved) / aov),
-          forterValue: Math.round(regionData.future.bankApproved / aov)
+          forterValue: Math.round(regionData.future.bankApproved / aov),
+          isResult: true
         },
         { 
           label: "Post Auth fraud approved sales ($)", 
           currentValue: formatCurrency(regionData.current.bankApproved),
           impactValue: formatCurrency(regionData.future.bankApproved - regionData.current.bankApproved),
-          forterValue: formatCurrency(regionData.future.bankApproved)
+          forterValue: formatCurrency(regionData.future.bankApproved),
+          isResult: true
         }
       );
       
@@ -553,19 +565,22 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
           label: "Total non-EEA sales completion (in-scope) (#)", 
           currentValue: Math.round(regionData.current.completed / aov),
           impactValue: Math.round((regionData.future.completed - regionData.current.completed) / aov),
-          forterValue: Math.round(regionData.future.completed / aov)
+          forterValue: Math.round(regionData.future.completed / aov),
+          isResult: true
         },
         { 
           label: "Total non-EEA sales completion (in-scope) ($)", 
           currentValue: formatCurrency(regionData.current.completed),
           impactValue: formatCurrency(regionData.future.completed - regionData.current.completed),
-          forterValue: formatCurrency(regionData.future.completed)
+          forterValue: formatCurrency(regionData.future.completed),
+          isResult: true
         },
         { 
           label: "Total non-EEA sales completion (in-scope) - deduped ($)", 
           currentValue: formatCurrency(regionData.current.completed),
           impactValue: formatCurrency(regionData.future.completed - regionData.current.completed),
-          forterValue: formatCurrency(regionData.future.completed)
+          forterValue: formatCurrency(regionData.future.completed),
+          isResult: true
         },
         { 
           label: "Completion rate (%)", 
