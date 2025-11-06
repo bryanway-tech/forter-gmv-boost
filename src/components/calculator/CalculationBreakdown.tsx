@@ -49,7 +49,11 @@ export const CalculationBreakdown = ({
   const formatImpact = (impact: string | number | undefined) => {
     if (impact === undefined || impact === null) return "";
     const str = String(impact);
-    if (str === "$0" || str === "0" || str === "0%" || str === "0.00%") return str;
+    
+    // Check for zero values - return without + sign
+    if (str === "$0" || str === "0" || str === "0%" || str === "0.00%" || str === "+0" || str === "+$0" || str === "+0%") {
+      return str.replace("+", ""); // Remove + if present
+    }
     
     // If it already has a sign, return as is
     if (str.startsWith("+") || str.startsWith("-")) return str;

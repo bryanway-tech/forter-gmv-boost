@@ -30,6 +30,26 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Format number with commas for display
+  const formatNumberWithCommas = (value: number | undefined | null): string => {
+    if (value === undefined || value === null || value === 0) return "";
+    return value.toLocaleString("en-US");
+  };
+
+  // Parse number from string with commas
+  const parseNumberFromString = (value: string): number => {
+    if (!value) return 0;
+    const cleaned = value.replace(/,/g, "");
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  // Handle numeric input change with comma formatting
+  const handleNumericChange = (field: keyof CalculatorData, value: string) => {
+    const numericValue = parseNumberFromString(value);
+    updateField(field, numericValue);
+  };
+
   // Calculate Average Order Value from revenue and transactions
   const calculateAOV = (revenue?: number, transactions?: number) => {
     if (revenue && transactions && transactions > 0) {
@@ -166,9 +186,10 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Label htmlFor="amerGMV">Annual GMV Attempts ($)</Label>
                 <Input
                   id="amerGMV"
-                  type="number"
-                  value={formData.amerAnnualGMV ?? ""}
-                  onChange={(e) => updateField("amerAnnualGMV", parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={formatNumberWithCommas(formData.amerAnnualGMV)}
+                  onChange={(e) => handleNumericChange("amerAnnualGMV", e.target.value)}
+                  placeholder="0"
                 />
               </div>
 
@@ -176,9 +197,10 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Label htmlFor="amerGrossAttempts">Gross Sales Attempts (#)</Label>
                 <Input
                   id="amerGrossAttempts"
-                  type="number"
-                  value={formData.amerGrossAttempts ?? ""}
-                  onChange={(e) => updateField("amerGrossAttempts", parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={formatNumberWithCommas(formData.amerGrossAttempts)}
+                  onChange={(e) => handleNumericChange("amerGrossAttempts", e.target.value)}
+                  placeholder="0"
                 />
               </div>
 
@@ -287,9 +309,10 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Label htmlFor="emeaGMV">Annual GMV Attempts ($)</Label>
                 <Input
                   id="emeaGMV"
-                  type="number"
-                  value={formData.emeaAnnualGMV ?? ""}
-                  onChange={(e) => updateField("emeaAnnualGMV", parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={formatNumberWithCommas(formData.emeaAnnualGMV)}
+                  onChange={(e) => handleNumericChange("emeaAnnualGMV", e.target.value)}
+                  placeholder="0"
                 />
               </div>
 
@@ -297,9 +320,10 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Label htmlFor="emeaGrossAttempts">Gross Sales Attempts (#)</Label>
                 <Input
                   id="emeaGrossAttempts"
-                  type="number"
-                  value={formData.emeaGrossAttempts ?? ""}
-                  onChange={(e) => updateField("emeaGrossAttempts", parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={formatNumberWithCommas(formData.emeaGrossAttempts)}
+                  onChange={(e) => handleNumericChange("emeaGrossAttempts", e.target.value)}
+                  placeholder="0"
                 />
               </div>
 
@@ -376,9 +400,10 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Label htmlFor="apacGMV">Annual GMV Attempts ($)</Label>
                 <Input
                   id="apacGMV"
-                  type="number"
-                  value={formData.apacAnnualGMV ?? ""}
-                  onChange={(e) => updateField("apacAnnualGMV", parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={formatNumberWithCommas(formData.apacAnnualGMV)}
+                  onChange={(e) => handleNumericChange("apacAnnualGMV", e.target.value)}
+                  placeholder="0"
                 />
               </div>
 
@@ -386,9 +411,10 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Label htmlFor="apacGrossAttempts">Gross Sales Attempts (#)</Label>
                 <Input
                   id="apacGrossAttempts"
-                  type="number"
-                  value={formData.apacGrossAttempts ?? ""}
-                  onChange={(e) => updateField("apacGrossAttempts", parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={formatNumberWithCommas(formData.apacGrossAttempts)}
+                  onChange={(e) => handleNumericChange("apacGrossAttempts", e.target.value)}
+                  placeholder="0"
                 />
               </div>
 
@@ -508,9 +534,10 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Label htmlFor="fraudCBAOV">Fraud Chargeback AOV ($)</Label>
                 <Input
                   id="fraudCBAOV"
-                  type="number"
-                  value={formData.fraudCBAOV ?? ""}
-                  onChange={(e) => updateField("fraudCBAOV", parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={formatNumberWithCommas(formData.fraudCBAOV)}
+                  onChange={(e) => handleNumericChange("fraudCBAOV", e.target.value)}
+                  placeholder="0"
                 />
               </div>
 
@@ -529,9 +556,10 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                 <Label htmlFor="serviceCBAOV">Service Chargeback AOV ($)</Label>
                 <Input
                   id="serviceCBAOV"
-                  type="number"
-                  value={formData.serviceCBAOV ?? ""}
-                  onChange={(e) => updateField("serviceCBAOV", parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={formatNumberWithCommas(formData.serviceCBAOV)}
+                  onChange={(e) => handleNumericChange("serviceCBAOV", e.target.value)}
+                  placeholder="0"
                 />
               </div>
             </div>

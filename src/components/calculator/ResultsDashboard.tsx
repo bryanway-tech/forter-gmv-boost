@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { CalculatorData } from "@/pages/Index";
 import forterLogo from "@/assets/forter-logo.png";
 import { ArrowUp, TrendingUp, DollarSign, Shield, Info } from "lucide-react";
@@ -22,6 +24,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     calculations: any[];
     columns?: string[];
   }>({ title: "", calculations: [] });
+  const [showProfitOnly, setShowProfitOnly] = useState(false);
 
   const forterKPIs = data.forterKPIs || defaultForterKPIs;
 
@@ -1009,12 +1012,37 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
               <div className="p-2 bg-purple-500 rounded-lg">
                 <DollarSign className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-semibold text-lg">Total Value</h3>
+              <h3 className="font-semibold text-lg">{showProfitOnly ? "Profit Impact" : "Total Value"}</h3>
             </div>
             <p className="text-4xl font-bold text-purple-700 dark:text-purple-300 mb-2">
-              {formatCurrency(metrics.totalGMVUplift + metrics.chargebackSavings)}
+              {formatCurrency(
+                showProfitOnly 
+                  ? (() => {
+                      // Calculate weighted average gross margin
+                      const totalGMV = (data.amerAnnualGMV || 0) + (data.emeaAnnualGMV || 0) + (data.apacAnnualGMV || 0);
+                      const weightedMargin = totalGMV > 0
+                        ? ((data.amerAnnualGMV || 0) * (data.amerGrossMarginPercent || 50) +
+                           (data.emeaAnnualGMV || 0) * (data.emeaGrossMarginPercent || 50) +
+                           (data.apacAnnualGMV || 0) * (data.apacGrossMarginPercent || 50)) / totalGMV
+                        : 50;
+                      return (metrics.totalGMVUplift * weightedMargin / 100) + metrics.chargebackSavings;
+                    })()
+                  : metrics.totalGMVUplift + metrics.chargebackSavings
+              )}
             </p>
-            <p className="text-sm text-muted-foreground">Combined annual value</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              {showProfitOnly ? "GMV uplift × margin + chargeback savings" : "Combined annual value"}
+            </p>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="profit-mode"
+                checked={showProfitOnly}
+                onCheckedChange={setShowProfitOnly}
+              />
+              <Label htmlFor="profit-mode" className="text-sm cursor-pointer">
+                Show profit only
+              </Label>
+            </div>
           </Card>
         </div>
 
