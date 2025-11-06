@@ -173,6 +173,16 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="amerGrossAttempts">Gross Sales Attempts (#)</Label>
+                <Input
+                  id="amerGrossAttempts"
+                  type="number"
+                  value={formData.amerGrossAttempts ?? ""}
+                  onChange={(e) => updateField("amerGrossAttempts", parseFloat(e.target.value) || 0)}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="amerMargin">Gross Margin (%)</Label>
                 <Input
                   id="amerMargin"
@@ -284,6 +294,16 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="emeaGrossAttempts">Gross Sales Attempts (#)</Label>
+                <Input
+                  id="emeaGrossAttempts"
+                  type="number"
+                  value={formData.emeaGrossAttempts ?? ""}
+                  onChange={(e) => updateField("emeaGrossAttempts", parseFloat(e.target.value) || 0)}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="emeaMargin">Gross Margin (%)</Label>
                 <Input
                   id="emeaMargin"
@@ -359,6 +379,16 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                   type="number"
                   value={formData.apacAnnualGMV ?? ""}
                   onChange={(e) => updateField("apacAnnualGMV", parseFloat(e.target.value) || 0)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="apacGrossAttempts">Gross Sales Attempts (#)</Label>
+                <Input
+                  id="apacGrossAttempts"
+                  type="number"
+                  value={formData.apacGrossAttempts ?? ""}
+                  onChange={(e) => updateField("apacGrossAttempts", parseFloat(e.target.value) || 0)}
                 />
               </div>
 

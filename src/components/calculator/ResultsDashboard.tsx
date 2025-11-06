@@ -291,15 +291,18 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const calculations: any[] = [];
     
     // Helper to calculate AOV for the region
-    const getAOV = (revenue: number) => {
-      // Using simple AOV calculation - default $105 as per Excel template
-      return 105;
+    const getAOV = (revenue: number, attempts: number) => {
+      if (attempts && attempts > 0) {
+        return revenue / attempts;
+      }
+      return 105; // Default fallback
     };
     
     // Helper to add regional breakdown with three-column format
     const addRegionalBreakdown = (region: 'AMER' | 'EMEA' | 'APAC', revenue: number, uplift: number) => {
       const regionData = region === 'AMER' ? metrics.amer : region === 'EMEA' ? metrics.emea : metrics.apac;
-      const aov = getAOV(revenue);
+      const attempts = region === 'AMER' ? data.amerGrossAttempts : region === 'EMEA' ? data.emeaGrossAttempts : data.apacGrossAttempts;
+      const aov = getAOV(revenue, attempts || 0);
       const creditCardPercent = 1.0; // Assuming 100% credit card for now
       
       // Add section header
@@ -321,13 +324,13 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
           isSubheader: true 
         },
         { 
-          label: "Non-EEA eCommerce gross sales attempts (#)", 
-          currentValue: Math.round(revenue / aov),
+          label: `${region === 'AMER' ? 'Non-EEA' : region === 'EMEA' ? 'EEA' : 'APAC'} eCommerce gross sales attempts (#)`, 
+          currentValue: attempts || Math.round(revenue / aov),
           impactValue: "",
-          forterValue: Math.round(revenue / aov)
+          forterValue: attempts || Math.round(revenue / aov)
         },
         { 
-          label: "Non-EEA eCommerce gross sales attempts ($)", 
+          label: `${region === 'AMER' ? 'Non-EEA' : region === 'EMEA' ? 'EEA' : 'APAC'} eCommerce gross sales attempts ($)`, 
           currentValue: formatCurrency(revenue),
           impactValue: "",
           forterValue: formatCurrency(revenue)
@@ -341,7 +344,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
         { 
           label: "Pre-Auth fraud approval rate (%)", 
           currentValue: `${(regionData.rates.fraud * 100).toFixed(2)}%`,
-          impactValue: `${((regionData.futureRates.fraud - regionData.rates.fraud) * 100).toFixed(2)}%`,
+          impactValue: `${((regionData.futureRates.fraud / regionData.rates.fraud - 1) * 100).toFixed(2)}%`,
           forterValue: `${(regionData.futureRates.fraud * 100).toFixed(2)}%`
         },
         { 
@@ -401,13 +404,15 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
           label: "3DS failure and abandonment transactions (#)", 
           currentValue: Math.round(regionData.current.abandoned3DS / aov),
           impactValue: Math.round((regionData.future.abandoned3DS - regionData.current.abandoned3DS) / aov),
-          forterValue: Math.round(regionData.future.abandoned3DS / aov)
+          forterValue: Math.round(regionData.future.abandoned3DS / aov),
+          isBad: true
         },
         { 
           label: "3DS failure and abandonment transactions ($)", 
           currentValue: formatCurrency(regionData.current.abandoned3DS),
           impactValue: formatCurrency(regionData.future.abandoned3DS - regionData.current.abandoned3DS),
-          forterValue: formatCurrency(regionData.future.abandoned3DS)
+          forterValue: formatCurrency(regionData.future.abandoned3DS),
+          isBad: true
         },
         { 
           label: "3DS exempt successful (#)", 
@@ -457,19 +462,22 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
           label: "Declined transactions by issuing bank (%)", 
           currentValue: `${((1 - regionData.rates.bank) * 100).toFixed(2)}%`,
           impactValue: `${(((1 - regionData.futureRates.bank) - (1 - regionData.rates.bank)) * 100).toFixed(2)}%`,
-          forterValue: `${((1 - regionData.futureRates.bank) * 100).toFixed(2)}%`
+          forterValue: `${((1 - regionData.futureRates.bank) * 100).toFixed(2)}%`,
+          isBad: true
         },
         { 
           label: "Issuing bank declines (#)", 
           currentValue: Math.round(currentBankDeclines / aov),
           impactValue: Math.round((futureBankDeclines - currentBankDeclines) / aov),
-          forterValue: Math.round(futureBankDeclines / aov)
+          forterValue: Math.round(futureBankDeclines / aov),
+          isBad: true
         },
         { 
           label: "Issuing bank declines ($)", 
           currentValue: formatCurrency(currentBankDeclines),
           impactValue: formatCurrency(futureBankDeclines - currentBankDeclines),
-          forterValue: formatCurrency(futureBankDeclines)
+          forterValue: formatCurrency(futureBankDeclines),
+          isBad: true
         },
         { 
           label: "Post Auth fraud approved sales (#)", 

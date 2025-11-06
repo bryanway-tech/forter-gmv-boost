@@ -23,6 +23,7 @@ export type CalculatorData = {
   
   // AMER Regional Data
   amerAnnualGMV?: number;
+  amerGrossAttempts?: number; // Number of transaction attempts
   amerGrossMarginPercent?: number;
   amerPreAuthApprovalRate?: number;
   amerPostAuthApprovalRate?: number;
@@ -34,6 +35,7 @@ export type CalculatorData = {
   
   // EMEA Regional Data
   emeaAnnualGMV?: number;
+  emeaGrossAttempts?: number; // Number of transaction attempts
   emeaGrossMarginPercent?: number;
   emeaPreAuthApprovalRate?: number;
   emeaPostAuthApprovalRate?: number;
@@ -45,6 +47,7 @@ export type CalculatorData = {
   
   // APAC Regional Data
   apacAnnualGMV?: number;
+  apacGrossAttempts?: number; // Number of transaction attempts
   apacGrossMarginPercent?: number;
   apacPreAuthApprovalRate?: number;
   apacPostAuthApprovalRate?: number;

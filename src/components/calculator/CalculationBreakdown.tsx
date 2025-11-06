@@ -17,6 +17,7 @@ interface CalculationBreakdownProps {
     isResult?: boolean;
     isHeader?: boolean;
     isSubheader?: boolean;
+    isBad?: boolean; // For negative metrics like declines
   }[];
 }
 
@@ -73,6 +74,13 @@ export const CalculationBreakdown = ({
         <ScrollArea className="max-h-[60vh] pr-4">
           {isMultiColumn ? (
             <div className="space-y-2">
+              {/* Column Headers */}
+              <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-3 items-center py-3 border-b-2 border-primary/20 font-semibold text-sm bg-muted/30 px-2 rounded-t sticky top-0 z-10">
+                <div>Metric</div>
+                <div className="text-right">{columns[0]}</div>
+                <div className="text-right">{columns[1]}</div>
+                <div className="text-right">{columns[2]}</div>
+              </div>
               {calculations.map((calc, index) => {
                 if (calc.isHeader) {
                   return (
@@ -101,19 +109,23 @@ export const CalculationBreakdown = ({
                           </div>
                         )}
                       </div>
-                      <div className={`text-right ${calc.isResult ? "text-primary" : ""}`}>
+                      <div className={`text-right ${calc.isResult ? "text-primary" : calc.isBad ? "text-destructive" : ""}`}>
                         {formatValue(calc.currentValue)}
                       </div>
                       <div className={`text-right font-medium ${
                         calc.isResult 
                           ? "text-primary" 
-                          : String(calc.impactValue).includes("-") 
-                            ? "text-destructive" 
-                            : "text-green-600 dark:text-green-400"
+                          : calc.isBad
+                            ? String(calc.impactValue).includes("-")
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-destructive"
+                            : String(calc.impactValue).includes("-") 
+                              ? "text-destructive" 
+                              : "text-green-600 dark:text-green-400"
                       }`}>
                         {formatImpact(calc.impactValue)}
                       </div>
-                      <div className={`text-right ${calc.isResult ? "text-primary" : ""}`}>
+                      <div className={`text-right ${calc.isResult ? "text-primary" : calc.isBad ? "text-destructive" : ""}`}>
                         {formatValue(calc.forterValue)}
                       </div>
                     </div>
