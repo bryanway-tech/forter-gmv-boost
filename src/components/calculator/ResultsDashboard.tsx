@@ -10,10 +10,12 @@ import { defaultForterKPIs } from "@/components/calculator/ForterKPIConfig";
 interface ResultsDashboardProps {
   data: CalculatorData;
   customerLogoUrl?: string;
-  onReset: () => void;
+  onEditManual: () => void;
+  onEditChatbot: () => void;
+  onStartOver: () => void;
 }
 
-export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDashboardProps) => {
+export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditChatbot, onStartOver }: ResultsDashboardProps) => {
   const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [breakdownData, setBreakdownData] = useState<{
     title: string;
@@ -597,16 +599,24 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-8">
             <img src={forterLogo} alt="Forter" className="h-12 object-contain" />
             {customerLogoUrl && (
               <img src={customerLogoUrl} alt="Customer" className="h-12 object-contain" />
             )}
           </div>
-          <Button variant="default" onClick={onReset}>
-            Edit Inputs
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="default" onClick={onEditManual}>
+              Edit Manual Inputs
+            </Button>
+            <Button variant="outline" onClick={onEditChatbot}>
+              Return to AI Chat
+            </Button>
+            <Button variant="outline" onClick={onStartOver}>
+              Start Over
+            </Button>
+          </div>
         </div>
 
         {/* Title */}

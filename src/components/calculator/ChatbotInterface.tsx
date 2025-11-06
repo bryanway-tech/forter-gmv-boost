@@ -15,19 +15,23 @@ interface Message {
 
 interface ChatbotInterfaceProps {
   onComplete: (data: CalculatorData) => void;
+  initialData?: CalculatorData;
 }
 
-export const ChatbotInterface = ({ onComplete }: ChatbotInterfaceProps) => {
+export const ChatbotInterface = ({ onComplete, initialData }: ChatbotInterfaceProps) => {
+  const hasInitialData = initialData && Object.keys(initialData).length > 1; // More than just forterKPIs
+  
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content:
-        "Hello! I'll help you calculate the potential GMV uplift with Forter's fraud management solution. Let's start with your revenue data. What is your annual gross revenue in the AMER region (in USD)?",
+      content: hasInitialData 
+        ? "I can see you've already entered some data. Would you like to continue editing your inputs, or start fresh? Just let me know what you'd like to change!"
+        : "Hello! I'll help you calculate the potential GMV uplift with Forter's fraud management solution. Let's start with your revenue data. What is your annual gross revenue in the AMER region (in USD)?",
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [collectedData, setCollectedData] = useState<CalculatorData>({});
+  const [collectedData, setCollectedData] = useState<CalculatorData>(initialData || {});
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

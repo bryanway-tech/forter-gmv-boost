@@ -100,10 +100,21 @@ const Index = () => {
     setShowResults(true);
   };
 
-  const handleReset = () => {
+  const handleEditManual = () => {
+    setMode("manual");
+    setShowResults(false);
+  };
+
+  const handleEditChatbot = () => {
+    setMode("chatbot");
+    setShowResults(false);
+  };
+
+  const handleStartOver = () => {
     setMode("select");
     setCalculatorData({ forterKPIs: defaultForterKPIs });
     setShowResults(false);
+    setCustomerLogoUrl("");
   };
 
   if (mode === "select") {
@@ -191,7 +202,9 @@ const Index = () => {
       <ResultsDashboard
         data={calculatorData}
         customerLogoUrl={customerLogoUrl}
-        onReset={handleReset}
+        onEditManual={handleEditManual}
+        onEditChatbot={handleEditChatbot}
+        onStartOver={handleStartOver}
       />
     );
   }
@@ -214,9 +227,9 @@ const Index = () => {
 
         {/* Content */}
         {mode === "manual" ? (
-          <ManualInputForm onComplete={handleDataComplete} />
+          <ManualInputForm onComplete={handleDataComplete} initialData={calculatorData} />
         ) : (
-          <ChatbotInterface onComplete={handleDataComplete} />
+          <ChatbotInterface onComplete={handleDataComplete} initialData={calculatorData} />
         )}
       </div>
     </div>

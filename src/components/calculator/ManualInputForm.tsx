@@ -11,17 +11,20 @@ import { toast } from "sonner";
 
 interface ManualInputFormProps {
   onComplete: (data: CalculatorData) => void;
+  initialData?: CalculatorData;
 }
 
-export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
-  const [formData, setFormData] = useState<CalculatorData>({
-    amerGrossMarginPercent: 50,
-    emeaGrossMarginPercent: 50,
-    apacGrossMarginPercent: 50,
-    fraudCBAOV: 158,
-    serviceCBAOV: 158,
-    forterKPIs: defaultForterKPIs,
-  });
+export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProps) => {
+  const [formData, setFormData] = useState<CalculatorData>(
+    initialData || {
+      amerGrossMarginPercent: 50,
+      emeaGrossMarginPercent: 50,
+      apacGrossMarginPercent: 50,
+      fraudCBAOV: 158,
+      serviceCBAOV: 158,
+      forterKPIs: defaultForterKPIs,
+    }
+  );
 
   const updateField = (field: keyof CalculatorData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
