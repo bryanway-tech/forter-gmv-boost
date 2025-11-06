@@ -23,28 +23,46 @@ serve(async (req) => {
 FOCUS ONLY ON THESE METRICS (skip customer details like name, industry, reps):
 
 1. AMER Region (Start here):
-   - Gross Revenue in USD (required)
+   - Annual GMV Attempts in USD (required) - total value of all transaction attempts
+   - Gross Sales Attempts (#) - number of transaction attempts
    - Gross Margin % (if not provided, use 50% default)
    - Fraud Check Timing: Ask "Is your fraud solution pre-authorization or post-authorization?" Accept: "pre-auth", "post-auth", "before", "after", etc.
    - If pre-auth: Pre-Auth Fraud Approval Rate % (what % of transactions does your fraud system approve?)
    - If post-auth: Post-Auth Fraud Approval Rate %
    - Issuing Bank Decline Rate % (what % of transactions are declined by the bank?) - default 7% if not provided
+   - 3DS Challenge Rate % (what % of transactions require 3DS challenge?)
+   - 3DS Abandonment Rate % (what % of 3DS challenged transactions are abandoned?)
+   - Manual Review Rate % (what % of transactions require manual review?)
 
-2. EMEA Region (Optional, ask if they have EMEA revenue):
-   - Gross Revenue in USD
+2. EMEA Region (Optional, ask if they have EMEA GMV):
+   - Annual GMV Attempts in USD
+   - Gross Sales Attempts (#)
    - Gross Margin % (default 50%)
-   - Pre-Auth Fraud Approval Rate %
+   - Fraud Check Timing: pre-auth or post-auth
+   - If pre-auth: Pre-Auth Fraud Approval Rate %
+   - If post-auth: Post-Auth Fraud Approval Rate %
    - Issuing Bank Decline Rate % (default 5%)
+   - 3DS Challenge Rate %
+   - 3DS Abandonment Rate %
+   - Manual Review Rate %
 
-3. APAC Region (Optional, ask if they have APAC revenue):
-   - Gross Revenue in USD
+3. APAC Region (Optional, ask if they have APAC GMV):
+   - Annual GMV Attempts in USD
+   - Gross Sales Attempts (#)
    - Gross Margin % (default 50%)
    - Fraud Check Timing (pre-auth or post-auth)
-   - Fraud Approval Rate %
+   - If pre-auth: Pre-Auth Fraud Approval Rate %
+   - If post-auth: Post-Auth Fraud Approval Rate %
    - Issuing Bank Decline Rate % (default 7%)
+   - 3DS Challenge Rate %
+   - 3DS Abandonment Rate %
+   - Manual Review Rate %
 
 4. Chargebacks (Optional but important):
    - Fraud Chargeback Rate % (default 0.8%)
+   - Fraud Chargeback AOV in USD (default $158)
+   - Service Chargeback Rate %
+   - Service Chargeback AOV in USD (default $158)
 
 Current collected data: ${JSON.stringify(collectedData)}
 
@@ -53,13 +71,13 @@ IMPORTANT RULES:
 - Be conversational but direct - focus on fraud metrics only
 - Skip asking about customer name, industry, account reps, etc.
 - Intelligently extract numbers from responses (e.g., "75 million" → 75000000, "95%" → 95)
-- When user gives revenue, always confirm and move to next question
-- Once you have at least one region's revenue, fraud timing, fraud approval rate, and bank decline rate, you can complete
+- When user gives GMV, always confirm and move to next question
+- Once you have at least one region's GMV, fraud timing, fraud approval rate, and bank decline rate, you can complete
 - You MUST respond with valid JSON in this exact structure:
 
 {
   "message": "your conversational response here",
-  "updatedData": { "amerGrossRevenue": 75000000, "amerFraudCheckTiming": "pre-auth" },
+  "updatedData": { "amerAnnualGMV": 75000000, "amerGrossAttempts": 500000, "amerFraudCheckTiming": "pre-auth", "amer3DSChallengeRate": 10, "amer3DSAbandonmentRate": 5, "amerManualReviewRate": 3 },
   "isComplete": false
 }
 
