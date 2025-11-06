@@ -14,7 +14,6 @@ interface ManualInputFormProps {
 
 export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
   const [formData, setFormData] = useState<CalculatorData>({
-    averageOrderValue: 105,
     amerGrossMargin: 50,
     emeaGrossMargin: 50,
     fraudChargebackAOV: 158,
@@ -24,6 +23,22 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
   const updateField = (field: keyof CalculatorData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  // Calculate Average Order Value from revenue and transactions
+  const calculateAOV = (revenue?: number, transactions?: number) => {
+    if (revenue && transactions && transactions > 0) {
+      return revenue / transactions;
+    }
+    return 0;
+  };
+
+  const amerTransactions = formData.amerGrossRevenue && formData.amerGrossRevenue > 0
+    ? Math.round(formData.amerGrossRevenue / 105) // Default AOV assumption
+    : 0;
+
+  const emeaTransactions = formData.emeaGrossRevenue && formData.emeaGrossRevenue > 0
+    ? Math.round(formData.emeaGrossRevenue / 105)
+    : 0;
 
   const handleSubmit = () => {
     // Validate required fields
@@ -72,11 +87,23 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                     <SelectValue placeholder="Select industry" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="apparel">Apparel</SelectItem>
-                    <SelectItem value="electronics">Electronics</SelectItem>
+                    <SelectItem value="apparel">Apparel & Fashion</SelectItem>
+                    <SelectItem value="electronics">Electronics & Technology</SelectItem>
                     <SelectItem value="food">Food & Beverage</SelectItem>
                     <SelectItem value="beauty">Beauty & Cosmetics</SelectItem>
                     <SelectItem value="home">Home & Garden</SelectItem>
+                    <SelectItem value="sports">Sports & Outdoors</SelectItem>
+                    <SelectItem value="books">Books & Media</SelectItem>
+                    <SelectItem value="toys">Toys & Games</SelectItem>
+                    <SelectItem value="automotive">Automotive</SelectItem>
+                    <SelectItem value="jewelry">Jewelry & Accessories</SelectItem>
+                    <SelectItem value="health">Health & Wellness</SelectItem>
+                    <SelectItem value="furniture">Furniture</SelectItem>
+                    <SelectItem value="pet">Pet Supplies</SelectItem>
+                    <SelectItem value="grocery">Grocery & Gourmet</SelectItem>
+                    <SelectItem value="marketplace">Marketplace</SelectItem>
+                    <SelectItem value="travel">Travel & Hospitality</SelectItem>
+                    <SelectItem value="digital">Digital Goods & Services</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -91,18 +118,28 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
                   onChange={(e) => updateField("hqLocation", e.target.value)}
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="averageOrderValue">Average Order Value ($)</Label>
-                <Input
-                  id="averageOrderValue"
-                  type="number"
-                  placeholder="105"
-                  value={formData.averageOrderValue || ""}
-                  onChange={(e) => updateField("averageOrderValue", parseFloat(e.target.value))}
-                />
-              </div>
             </div>
+
+            {/* Display calculated AOV */}
+            {(formData.amerGrossRevenue || formData.emeaGrossRevenue) && (
+              <div className="mt-4 p-4 bg-muted rounded-lg">
+                <h4 className="font-semibold mb-2">Calculated Metrics</h4>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  {formData.amerGrossRevenue && (
+                    <div>
+                      <span className="text-muted-foreground">AMER Transactions: </span>
+                      <span className="font-bold">{amerTransactions.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {formData.emeaGrossRevenue && (
+                    <div>
+                      <span className="text-muted-foreground">EMEA Transactions: </span>
+                      <span className="font-bold">{emeaTransactions.toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* AMER Metrics */}

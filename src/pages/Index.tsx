@@ -34,9 +34,6 @@ export type CalculatorData = {
   fraudChargebackAOV?: number;
   serviceChargebackRate?: number;
   serviceChargebackAOV?: number;
-  
-  // Common metrics
-  averageOrderValue?: number;
 };
 
 const Index = () => {
