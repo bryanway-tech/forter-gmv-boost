@@ -8,6 +8,8 @@ import { ResultsDashboard } from "@/components/calculator/ResultsDashboard";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 
+import { ForterKPIs, defaultForterKPIs } from "@/components/calculator/ForterKPIConfig";
+
 export type CalculatorData = {
   // Customer Information
   customerName?: string;
@@ -29,16 +31,29 @@ export type CalculatorData = {
   emeaPostAuthApprovalRate?: number;
   emeaIssuingBankDeclineRate?: number;
   
+  // APAC Fraud Management
+  apacGrossRevenue?: number;
+  apacGrossMargin?: number;
+  apacPreAuthApprovalRate?: number;
+  apacPostAuthApprovalRate?: number;
+  apacIssuingBankDeclineRate?: number;
+  apacFraudCheckTiming?: "pre-auth" | "post-auth";
+  
   // Chargebacks
   fraudChargebackRate?: number;
   fraudChargebackAOV?: number;
   serviceChargebackRate?: number;
   serviceChargebackAOV?: number;
+  
+  // Forter KPIs
+  forterKPIs?: ForterKPIs;
 };
 
 const Index = () => {
   const [mode, setMode] = useState<"select" | "manual" | "chatbot">("select");
-  const [calculatorData, setCalculatorData] = useState<CalculatorData>({});
+  const [calculatorData, setCalculatorData] = useState<CalculatorData>({
+    forterKPIs: defaultForterKPIs,
+  });
   const [customerLogoUrl, setCustomerLogoUrl] = useState<string>("");
   const [showResults, setShowResults] = useState(false);
 
@@ -61,7 +76,7 @@ const Index = () => {
 
   const handleReset = () => {
     setMode("select");
-    setCalculatorData({});
+    setCalculatorData({ forterKPIs: defaultForterKPIs });
     setShowResults(false);
   };
 

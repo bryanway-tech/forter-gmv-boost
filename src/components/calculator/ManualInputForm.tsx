@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalculatorData } from "@/pages/Index";
+import { ForterKPIConfig, defaultForterKPIs } from "@/components/calculator/ForterKPIConfig";
 import { toast } from "sonner";
 
 interface ManualInputFormProps {
@@ -16,8 +17,10 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
   const [formData, setFormData] = useState<CalculatorData>({
     amerGrossMargin: 50,
     emeaGrossMargin: 50,
+    apacGrossMargin: 50,
     fraudChargebackAOV: 158,
     serviceChargebackAOV: 158,
+    forterKPIs: defaultForterKPIs,
   });
 
   const updateField = (field: keyof CalculatorData, value: any) => {
@@ -40,9 +43,13 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
     ? Math.round(formData.emeaGrossRevenue / 105)
     : 0;
 
+  const apacTransactions = formData.apacGrossRevenue && formData.apacGrossRevenue > 0
+    ? Math.round(formData.apacGrossRevenue / 105)
+    : 0;
+
   const handleSubmit = () => {
     // Validate required fields
-    if (!formData.amerGrossRevenue && !formData.emeaGrossRevenue) {
+    if (!formData.amerGrossRevenue && !formData.emeaGrossRevenue && !formData.apacGrossRevenue) {
       toast.error("Please enter revenue for at least one region");
       return;
     }
@@ -57,10 +64,11 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
         <h2 className="text-2xl font-bold mb-6">Fraud Management Assessment</h2>
 
         <Tabs defaultValue="customer" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="customer">Customer Info</TabsTrigger>
-            <TabsTrigger value="amer">AMER Metrics</TabsTrigger>
-            <TabsTrigger value="emea">EMEA Metrics</TabsTrigger>
+            <TabsTrigger value="amer">AMER</TabsTrigger>
+            <TabsTrigger value="emea">EMEA</TabsTrigger>
+            <TabsTrigger value="apac">APAC</TabsTrigger>
             <TabsTrigger value="chargebacks">Chargebacks</TabsTrigger>
           </TabsList>
 
@@ -120,21 +128,27 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
               </div>
             </div>
 
-            {/* Display calculated AOV */}
-            {(formData.amerGrossRevenue || formData.emeaGrossRevenue) && (
+            {/* Display calculated transactions */}
+            {(formData.amerGrossRevenue || formData.emeaGrossRevenue || formData.apacGrossRevenue) && (
               <div className="mt-4 p-4 bg-muted rounded-lg">
-                <h4 className="font-semibold mb-2">Calculated Metrics</h4>
-                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <h4 className="font-semibold mb-2">Calculated Transactions</h4>
+                <div className="grid md:grid-cols-3 gap-4 text-sm">
                   {formData.amerGrossRevenue && (
                     <div>
-                      <span className="text-muted-foreground">AMER Transactions: </span>
+                      <span className="text-muted-foreground">AMER: </span>
                       <span className="font-bold">{amerTransactions.toLocaleString()}</span>
                     </div>
                   )}
                   {formData.emeaGrossRevenue && (
                     <div>
-                      <span className="text-muted-foreground">EMEA Transactions: </span>
+                      <span className="text-muted-foreground">EMEA: </span>
                       <span className="font-bold">{emeaTransactions.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {formData.apacGrossRevenue && (
+                    <div>
+                      <span className="text-muted-foreground">APAC: </span>
+                      <span className="font-bold">{apacTransactions.toLocaleString()}</span>
                     </div>
                   )}
                 </div>
@@ -273,6 +287,88 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
             </div>
           </TabsContent>
 
+          {/* APAC Metrics */}
+          <TabsContent value="apac" className="space-y-4 mt-6">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="apacRevenue">Gross Revenue ($)</Label>
+                <Input
+                  id="apacRevenue"
+                  type="number"
+                  placeholder="75000000"
+                  value={formData.apacGrossRevenue || ""}
+                  onChange={(e) => updateField("apacGrossRevenue", parseFloat(e.target.value))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="apacMargin">Gross Margin (%)</Label>
+                <Input
+                  id="apacMargin"
+                  type="number"
+                  placeholder="50"
+                  value={formData.apacGrossMargin || ""}
+                  onChange={(e) => updateField("apacGrossMargin", parseFloat(e.target.value))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="apacFraudTiming">Fraud Check Timing</Label>
+                <Select
+                  value={formData.apacFraudCheckTiming}
+                  onValueChange={(value: "pre-auth" | "post-auth") =>
+                    updateField("apacFraudCheckTiming", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select timing" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pre-auth">Pre-Authorization</SelectItem>
+                    <SelectItem value="post-auth">Post-Authorization</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.apacFraudCheckTiming === "pre-auth" && (
+                <div className="space-y-2">
+                  <Label htmlFor="apacPreAuth">Pre-Auth Fraud Approval Rate (%)</Label>
+                  <Input
+                    id="apacPreAuth"
+                    type="number"
+                    placeholder="95"
+                    value={formData.apacPreAuthApprovalRate || ""}
+                    onChange={(e) => updateField("apacPreAuthApprovalRate", parseFloat(e.target.value))}
+                  />
+                </div>
+              )}
+
+              {formData.apacFraudCheckTiming === "post-auth" && (
+                <div className="space-y-2">
+                  <Label htmlFor="apacPostAuth">Post-Auth Fraud Approval Rate (%)</Label>
+                  <Input
+                    id="apacPostAuth"
+                    type="number"
+                    placeholder="98.5"
+                    value={formData.apacPostAuthApprovalRate || ""}
+                    onChange={(e) => updateField("apacPostAuthApprovalRate", parseFloat(e.target.value))}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="apacBankDecline">Issuing Bank Decline Rate (%)</Label>
+                <Input
+                  id="apacBankDecline"
+                  type="number"
+                  placeholder="7"
+                  value={formData.apacIssuingBankDeclineRate || ""}
+                  onChange={(e) => updateField("apacIssuingBankDeclineRate", parseFloat(e.target.value))}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
           {/* Chargebacks */}
           <TabsContent value="chargebacks" className="space-y-4 mt-6">
             <div className="grid md:grid-cols-2 gap-4">
@@ -324,13 +420,19 @@ export const ManualInputForm = ({ onComplete }: ManualInputFormProps) => {
             </div>
           </TabsContent>
         </Tabs>
-
-        <div className="flex justify-end mt-6">
-          <Button onClick={handleSubmit} size="lg">
-            Calculate Uplift
-          </Button>
-        </div>
       </Card>
+
+      {/* Forter KPI Configuration */}
+      <ForterKPIConfig
+        kpis={formData.forterKPIs || defaultForterKPIs}
+        onUpdate={(kpis) => updateField("forterKPIs", kpis)}
+      />
+
+      <div className="flex justify-end">
+        <Button onClick={handleSubmit} size="lg">
+          Calculate Uplift
+        </Button>
+      </div>
     </div>
   );
 };

@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalculatorData } from "@/pages/Index";
 import forterLogo from "@/assets/forter-logo.png";
-import { ArrowUp, TrendingUp, DollarSign, Shield } from "lucide-react";
+import { ArrowUp, TrendingUp, DollarSign, Shield, Info } from "lucide-react";
+import { CalculationBreakdown } from "@/components/calculator/CalculationBreakdown";
+import { defaultForterKPIs } from "@/components/calculator/ForterKPIConfig";
 
 interface ResultsDashboardProps {
   data: CalculatorData;
@@ -11,42 +14,58 @@ interface ResultsDashboardProps {
 }
 
 export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDashboardProps) => {
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
+  const [breakdownData, setBreakdownData] = useState<{
+    title: string;
+    calculations: any[];
+  }>({ title: "", calculations: [] });
+
+  const forterKPIs = data.forterKPIs || defaultForterKPIs;
+
   // Calculate current and future states
   const calculateMetrics = () => {
     const amerRevenue = data.amerGrossRevenue || 0;
     const emeaRevenue = data.emeaGrossRevenue || 0;
-    const totalRevenue = amerRevenue + emeaRevenue;
+    const apacRevenue = data.apacGrossRevenue || 0;
+    const totalRevenue = amerRevenue + emeaRevenue + apacRevenue;
 
-    // Current state - Bank Approval Rate × Fraud Approval Rate = Complete Rate
+    // AMER calculations
     const amerBankApproval = 1 - (data.amerIssuingBankDeclineRate || 7) / 100;
     const amerFraudApproval =
       data.amerFraudCheckTiming === "pre-auth"
         ? (data.amerPreAuthApprovalRate || 95) / 100
         : (data.amerPostAuthApprovalRate || 98.5) / 100;
     const currentAmerCompleteRate = amerBankApproval * amerFraudApproval;
+    const futureAmerBankApproval = Math.min(0.99, amerBankApproval + forterKPIs.bankUplift / 100);
+    const futureAmerCompleteRate = futureAmerBankApproval * (forterKPIs.fraudApprovalRate / 100);
 
+    // EMEA calculations
     const emeaBankApproval = 1 - (data.emeaIssuingBankDeclineRate || 5) / 100;
     const emeaFraudApproval = (data.emeaPreAuthApprovalRate || 95) / 100;
     const currentEmeaCompleteRate = emeaBankApproval * emeaFraudApproval;
+    const futureEmeaBankApproval = Math.min(0.99, emeaBankApproval + forterKPIs.bankUplift / 100);
+    const futureEmeaCompleteRate = futureEmeaBankApproval * (forterKPIs.fraudApprovalRate / 100);
 
-    // Future state with Forter (99% fraud approval, 1% bank uplift)
-    const futureAmerFraudApproval = 0.99;
-    const futureAmerBankApproval = Math.min(0.99, amerBankApproval + 0.01);
-    const futureAmerCompleteRate = futureAmerBankApproval * futureAmerFraudApproval;
-
-    const futureEmeaFraudApproval = 0.99;
-    const futureEmeaBankApproval = Math.min(0.99, emeaBankApproval + 0.01);
-    const futureEmeaCompleteRate = futureEmeaBankApproval * futureEmeaFraudApproval;
+    // APAC calculations
+    const apacBankApproval = 1 - (data.apacIssuingBankDeclineRate || 7) / 100;
+    const apacFraudApproval =
+      data.apacFraudCheckTiming === "pre-auth"
+        ? (data.apacPreAuthApprovalRate || 95) / 100
+        : (data.apacPostAuthApprovalRate || 98.5) / 100;
+    const currentApacCompleteRate = apacBankApproval * apacFraudApproval;
+    const futureApacBankApproval = Math.min(0.99, apacBankApproval + forterKPIs.bankUplift / 100);
+    const futureApacCompleteRate = futureApacBankApproval * (forterKPIs.fraudApprovalRate / 100);
 
     // Calculate GMV uplift
     const amerGMVUplift = amerRevenue * (futureAmerCompleteRate - currentAmerCompleteRate);
     const emeaGMVUplift = emeaRevenue * (futureEmeaCompleteRate - currentEmeaCompleteRate);
-    const totalGMVUplift = amerGMVUplift + emeaGMVUplift;
+    const apacGMVUplift = apacRevenue * (futureApacCompleteRate - currentApacCompleteRate);
+    const totalGMVUplift = amerGMVUplift + emeaGMVUplift + apacGMVUplift;
 
-    // Chargeback reductions (70% reduction with Forter)
-    const currentChargebacks =
-      totalRevenue * ((data.fraudChargebackRate || 0.8) / 100);
-    const futureChargebacks = currentChargebacks * 0.3; // 70% reduction
+    // Chargeback calculations
+    const currentChargebacks = totalRevenue * ((data.fraudChargebackRate || 0.8) / 100);
+    const reductionRate = forterKPIs.chargebackReduction / 100;
+    const futureChargebacks = currentChargebacks * (1 - reductionRate);
     const chargebackSavings = currentChargebacks - futureChargebacks;
 
     return {
@@ -54,11 +73,21 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
       futureAmerCompleteRate: futureAmerCompleteRate * 100,
       currentEmeaCompleteRate: currentEmeaCompleteRate * 100,
       futureEmeaCompleteRate: futureEmeaCompleteRate * 100,
+      currentApacCompleteRate: currentApacCompleteRate * 100,
+      futureApacCompleteRate: futureApacCompleteRate * 100,
       totalGMVUplift,
+      amerGMVUplift,
+      emeaGMVUplift,
+      apacGMVUplift,
       gmvUpliftPercent: (totalGMVUplift / totalRevenue) * 100,
       chargebackSavings,
-      chargebackReductionPercent: 70,
+      chargebackReductionPercent: forterKPIs.chargebackReduction,
+      currentChargebacks,
+      futureChargebacks,
       totalRevenue,
+      amerRevenue,
+      emeaRevenue,
+      apacRevenue,
     };
   };
 
@@ -75,6 +104,92 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
 
   const formatPercent = (value: number) => {
     return `${value.toFixed(2)}%`;
+  };
+
+  const showGMVBreakdown = () => {
+    const calculations = [];
+
+    if (data.amerGrossRevenue) {
+      calculations.push(
+        { label: "AMER Revenue", value: metrics.amerRevenue },
+        { label: "Current Complete Rate", value: `${formatPercent(metrics.currentAmerCompleteRate)}` },
+        { label: "Future Complete Rate", value: `${formatPercent(metrics.futureAmerCompleteRate)}` },
+        {
+          label: "AMER GMV Uplift",
+          value: metrics.amerGMVUplift,
+          formula: `${formatCurrency(metrics.amerRevenue)} × (${formatPercent(metrics.futureAmerCompleteRate)} - ${formatPercent(metrics.currentAmerCompleteRate)})`,
+        }
+      );
+    }
+
+    if (data.emeaGrossRevenue) {
+      calculations.push(
+        { label: "EMEA Revenue", value: metrics.emeaRevenue },
+        { label: "Current Complete Rate", value: `${formatPercent(metrics.currentEmeaCompleteRate)}` },
+        { label: "Future Complete Rate", value: `${formatPercent(metrics.futureEmeaCompleteRate)}` },
+        {
+          label: "EMEA GMV Uplift",
+          value: metrics.emeaGMVUplift,
+          formula: `${formatCurrency(metrics.emeaRevenue)} × (${formatPercent(metrics.futureEmeaCompleteRate)} - ${formatPercent(metrics.currentEmeaCompleteRate)})`,
+        }
+      );
+    }
+
+    if (data.apacGrossRevenue) {
+      calculations.push(
+        { label: "APAC Revenue", value: metrics.apacRevenue },
+        { label: "Current Complete Rate", value: `${formatPercent(metrics.currentApacCompleteRate)}` },
+        { label: "Future Complete Rate", value: `${formatPercent(metrics.futureApacCompleteRate)}` },
+        {
+          label: "APAC GMV Uplift",
+          value: metrics.apacGMVUplift,
+          formula: `${formatCurrency(metrics.apacRevenue)} × (${formatPercent(metrics.futureApacCompleteRate)} - ${formatPercent(metrics.currentApacCompleteRate)})`,
+        }
+      );
+    }
+
+    calculations.push({
+      label: "Total GMV Uplift",
+      value: metrics.totalGMVUplift,
+      isResult: true,
+    });
+
+    setBreakdownData({
+      title: "GMV Uplift Calculation",
+      calculations,
+    });
+    setBreakdownOpen(true);
+  };
+
+  const showChargebackBreakdown = () => {
+    setBreakdownData({
+      title: "Chargeback Savings Calculation",
+      calculations: [
+        { label: "Total Revenue", value: metrics.totalRevenue },
+        { label: "Current Fraud Chargeback Rate", value: `${data.fraudChargebackRate || 0.8}%` },
+        {
+          label: "Current Chargebacks",
+          value: metrics.currentChargebacks,
+          formula: `${formatCurrency(metrics.totalRevenue)} × ${data.fraudChargebackRate || 0.8}%`,
+        },
+        {
+          label: "Forter Chargeback Reduction",
+          value: `${forterKPIs.chargebackReduction}%`,
+        },
+        {
+          label: "Future Chargebacks",
+          value: metrics.futureChargebacks,
+          formula: `${formatCurrency(metrics.currentChargebacks)} × (1 - ${forterKPIs.chargebackReduction}%)`,
+        },
+        {
+          label: "Total Savings",
+          value: metrics.chargebackSavings,
+          formula: `${formatCurrency(metrics.currentChargebacks)} - ${formatCurrency(metrics.futureChargebacks)}`,
+          isResult: true,
+        },
+      ],
+    });
+    setBreakdownOpen(true);
   };
 
   return (
@@ -105,12 +220,16 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
 
         {/* Key Metrics */}
         <div className="grid md:grid-cols-3 gap-6">
-          <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+          <Card
+            className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={showGMVBreakdown}
+          >
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-green-500 rounded-lg">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-semibold text-lg">GMV Uplift</h3>
+              <Info className="w-4 h-4 ml-auto text-muted-foreground" />
             </div>
             <p className="text-4xl font-bold text-green-700 dark:text-green-300 mb-2">
               {formatCurrency(metrics.totalGMVUplift)}
@@ -119,14 +238,19 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
               <ArrowUp className="w-4 h-4 inline mr-1" />
               {formatPercent(metrics.gmvUpliftPercent)} increase in approved GMV
             </p>
+            <p className="text-xs text-muted-foreground mt-2">Click to see calculation</p>
           </Card>
 
-          <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+          <Card
+            className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={showChargebackBreakdown}
+          >
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-blue-500 rounded-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-semibold text-lg">Chargeback Savings</h3>
+              <Info className="w-4 h-4 ml-auto text-muted-foreground" />
             </div>
             <p className="text-4xl font-bold text-blue-700 dark:text-blue-300 mb-2">
               {formatCurrency(metrics.chargebackSavings)}
@@ -134,6 +258,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
             <p className="text-sm text-muted-foreground">
               {formatPercent(metrics.chargebackReductionPercent)} reduction in fraud chargebacks
             </p>
+            <p className="text-xs text-muted-foreground mt-2">Click to see calculation</p>
           </Card>
 
           <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
@@ -153,7 +278,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
         {/* Complete Rate Analysis */}
         <Card className="p-6">
           <h2 className="text-2xl font-bold mb-6">Complete Rate Analysis</h2>
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             {data.amerGrossRevenue && (
               <div>
                 <h3 className="font-semibold mb-4 text-lg">AMER Region</h3>
@@ -211,6 +336,35 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
                 </div>
               </div>
             )}
+
+            {data.apacGrossRevenue && (
+              <div>
+                <h3 className="font-semibold mb-4 text-lg">APAC Region</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                    <span>Current Complete Rate</span>
+                    <span className="font-bold text-xl">
+                      {formatPercent(metrics.currentApacCompleteRate)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg">
+                    <span>With Forter</span>
+                    <span className="font-bold text-xl text-primary">
+                      {formatPercent(metrics.futureApacCompleteRate)}
+                    </span>
+                  </div>
+                  <div className="text-center">
+                    <ArrowUp className="w-8 h-8 mx-auto text-green-600" />
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {formatPercent(
+                        metrics.futureApacCompleteRate - metrics.currentApacCompleteRate
+                      )}{" "}
+                      improvement
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
 
@@ -223,19 +377,27 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
               potential
             </p>
             <p className="text-muted-foreground">
-              • Forter's 99% fraud approval rate and optimized bank routing can unlock{" "}
-              {formatCurrency(metrics.totalGMVUplift)} in additional GMV
+              • Forter's {forterKPIs.fraudApprovalRate}% fraud approval rate and optimized bank routing can
+              unlock {formatCurrency(metrics.totalGMVUplift)} in additional GMV
             </p>
             <p className="text-muted-foreground">
-              • 70% reduction in fraud chargebacks saves {formatCurrency(metrics.chargebackSavings)}{" "}
-              annually
+              • {forterKPIs.chargebackReduction}% reduction in fraud chargebacks saves{" "}
+              {formatCurrency(metrics.chargebackSavings)} annually
             </p>
             <p className="text-muted-foreground">
-              • Total potential value: {formatCurrency(metrics.totalGMVUplift + metrics.chargebackSavings)}
+              • Total potential value:{" "}
+              {formatCurrency(metrics.totalGMVUplift + metrics.chargebackSavings)}
             </p>
           </div>
         </Card>
       </div>
+
+      <CalculationBreakdown
+        open={breakdownOpen}
+        onOpenChange={setBreakdownOpen}
+        title={breakdownData.title}
+        calculations={breakdownData.calculations}
+      />
     </div>
   );
 };

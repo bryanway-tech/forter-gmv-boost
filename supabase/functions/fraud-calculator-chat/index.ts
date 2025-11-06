@@ -36,7 +36,14 @@ FOCUS ONLY ON THESE METRICS (skip customer details like name, industry, reps):
    - Pre-Auth Fraud Approval Rate %
    - Issuing Bank Decline Rate % (default 5%)
 
-3. Chargebacks (Optional but important):
+3. APAC Region (Optional, ask if they have APAC revenue):
+   - Gross Revenue in USD
+   - Gross Margin % (default 50%)
+   - Fraud Check Timing (pre-auth or post-auth)
+   - Fraud Approval Rate %
+   - Issuing Bank Decline Rate % (default 7%)
+
+4. Chargebacks (Optional but important):
    - Fraud Chargeback Rate % (default 0.8%)
 
 Current collected data: ${JSON.stringify(collectedData)}
@@ -47,7 +54,7 @@ IMPORTANT RULES:
 - Skip asking about customer name, industry, account reps, etc.
 - Intelligently extract numbers from responses (e.g., "75 million" → 75000000, "95%" → 95)
 - When user gives revenue, always confirm and move to next question
-- Once you have AMER revenue, fraud timing, fraud approval rate, and bank decline rate, you can complete
+- Once you have at least one region's revenue, fraud timing, fraud approval rate, and bank decline rate, you can complete
 - You MUST respond with valid JSON in this exact structure:
 
 {
