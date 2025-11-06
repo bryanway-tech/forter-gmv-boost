@@ -40,7 +40,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const apacRevenue = data.apacAnnualGMV || 0;
     const totalRevenue = amerRevenue + emeaRevenue + apacRevenue;
 
-    // AMER calculations
+    // AMER calculations - correct order: Fraud → 3DS → Bank → Manual Review
     const amerBankDeclineRate = (data.amerIssuingBankDeclineRate || 7) / 100;
     const amerBankApproval = 1 - amerBankDeclineRate;
     const amerFraudApproval =
@@ -48,16 +48,36 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
         ? (data.amerPreAuthApprovalRate || 95) / 100
         : (data.amerPostAuthApprovalRate || 98.5) / 100;
     
-    // Current state with 3DS and manual review impacts
+    // Current state: Fraud Approval → 3DS Flow → Bank Authorization → Manual Review
     const amer3DSRate = (data.amer3DSChallengeRate || 0) / 100;
     const amerAbandonmentRate = getAbandonmentRate('amer');
     const amerManualReviewRate = (data.amerManualReviewRate || 0) / 100;
-    const currentAmerCompleteRate = amerBankApproval * amerFraudApproval * (1 - amer3DSRate * amerAbandonmentRate) * (1 - amerManualReviewRate * 0.03);
     
-    // Future state with Forter - fix bank decline calculation per Excel J26
+    // Step 1: Fraud approval
+    const currentAmerFraudApproved = amerRevenue * amerFraudApproval;
+    
+    // Step 2: 3DS flow
+    const currentAmerTo3DS = currentAmerFraudApproved * amer3DSRate;
+    const currentAmer3DSAbandoned = currentAmerTo3DS * amerAbandonmentRate;
+    const currentAmerPost3DSSuccess = currentAmerTo3DS - currentAmer3DSAbandoned;
+    const currentAmerExempt3DS = currentAmerFraudApproved * (1 - amer3DSRate);
+    const currentAmerToAuth = currentAmerPost3DSSuccess + currentAmerExempt3DS;
+    
+    // Step 3: Bank authorization
+    const currentAmerBankApproved = currentAmerToAuth * amerBankApproval;
+    
+    // Step 4: Manual review
+    const currentAmerManualReview = currentAmerBankApproved * amerManualReviewRate;
+    const currentAmerManualAbandoned = currentAmerManualReview * 0.03;
+    const currentAmerCompleted = currentAmerBankApproved - currentAmerManualAbandoned;
+    const currentAmerCompleteRate = (currentAmerCompleted / amerRevenue) * 100;
+    
+    // Future state with Forter
     const bankDeclineImprovement = forterKPIs.bankDeclineImprovement / 100;
     const futureAmerBankDeclineRate = amerBankDeclineRate * (1 - bankDeclineImprovement);
     const futureAmerBankApproval = Math.min(0.99, 1 - futureAmerBankDeclineRate);
+    
+    const futureAmerFraudApproval = forterKPIs.fraudApprovalRate / 100;
     
     // Apply 3DS optimization - check if absolute or reduction mode
     const futureAmer3DSRate = forterKPIs.threeDSChallengeIsAbsolute
@@ -67,19 +87,32 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const futureAmerAbandonmentRate = forterKPIs.threeDSAbandonmentIsAbsolute
       ? forterKPIs.threeDSAbandonmentImprovement / 100
       : Math.max(0, amerAbandonmentRate * (1 - forterKPIs.threeDSAbandonmentImprovement / 100));
-      
-    const threeDSApprovalImpact = 1 - futureAmer3DSRate * futureAmerAbandonmentRate;
     
     // Apply manual review reduction - check if absolute or reduction mode
     const futureAmerManualReviewRate = forterKPIs.manualReviewIsAbsolute
       ? forterKPIs.manualReviewReduction / 100
       : amerManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
-      
-    const manualReviewImpact = 1 - futureAmerManualReviewRate * 0.02;
     
-    const futureAmerCompleteRate = futureAmerBankApproval * (forterKPIs.fraudApprovalRate / 100) * threeDSApprovalImpact * manualReviewImpact;
+    // Step 1: Fraud approval
+    const futureAmerFraudApproved = amerRevenue * futureAmerFraudApproval;
+    
+    // Step 2: 3DS flow
+    const futureAmerTo3DS = futureAmerFraudApproved * futureAmer3DSRate;
+    const futureAmer3DSAbandoned = futureAmerTo3DS * futureAmerAbandonmentRate;
+    const futureAmerPost3DSSuccess = futureAmerTo3DS - futureAmer3DSAbandoned;
+    const futureAmerExempt3DS = futureAmerFraudApproved * (1 - futureAmer3DSRate);
+    const futureAmerToAuth = futureAmerPost3DSSuccess + futureAmerExempt3DS;
+    
+    // Step 3: Bank authorization
+    const futureAmerBankApproved = futureAmerToAuth * futureAmerBankApproval;
+    
+    // Step 4: Manual review
+    const futureAmerManualReview = futureAmerBankApproved * futureAmerManualReviewRate;
+    const futureAmerManualAbandoned = futureAmerManualReview * 0.02;
+    const futureAmerCompleted = futureAmerBankApproved - futureAmerManualAbandoned;
+    const futureAmerCompleteRate = (futureAmerCompleted / amerRevenue) * 100;
 
-    // EMEA calculations
+    // EMEA calculations - correct order: Fraud → 3DS → Bank → Manual Review
     const emeaBankDeclineRate = (data.emeaIssuingBankDeclineRate ?? 5) / 100;
     const emeaBankApproval = 1 - emeaBankDeclineRate;
     const emeaFraudApproval = (data.emeaPreAuthApprovalRate ?? 95) / 100;
@@ -87,10 +120,24 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const emea3DSRate = (data.emea3DSChallengeRate ?? 0) / 100;
     const emeaAbandonmentRate = getAbandonmentRate('emea');
     const emeaManualReviewRate = (data.emeaManualReviewRate ?? 0) / 100;
-    const currentEmeaCompleteRate = emeaBankApproval * emeaFraudApproval * (1 - emea3DSRate * emeaAbandonmentRate) * (1 - emeaManualReviewRate * 0.03);
     
+    // Current state
+    const currentEmeaFraudApproved = emeaRevenue * emeaFraudApproval;
+    const currentEmeaTo3DS = currentEmeaFraudApproved * emea3DSRate;
+    const currentEmea3DSAbandoned = currentEmeaTo3DS * emeaAbandonmentRate;
+    const currentEmeaPost3DSSuccess = currentEmeaTo3DS - currentEmea3DSAbandoned;
+    const currentEmeaExempt3DS = currentEmeaFraudApproved * (1 - emea3DSRate);
+    const currentEmeaToAuth = currentEmeaPost3DSSuccess + currentEmeaExempt3DS;
+    const currentEmeaBankApproved = currentEmeaToAuth * emeaBankApproval;
+    const currentEmeaManualReview = currentEmeaBankApproved * emeaManualReviewRate;
+    const currentEmeaManualAbandoned = currentEmeaManualReview * 0.03;
+    const currentEmeaCompleted = currentEmeaBankApproved - currentEmeaManualAbandoned;
+    const currentEmeaCompleteRate = (currentEmeaCompleted / emeaRevenue) * 100;
+    
+    // Future state
     const futureEmeaBankDeclineRate = emeaBankDeclineRate * (1 - bankDeclineImprovement);
     const futureEmeaBankApproval = Math.min(0.99, 1 - futureEmeaBankDeclineRate);
+    const futureEmeaFraudApproval = forterKPIs.fraudApprovalRate / 100;
     
     const futureEmea3DSRate = forterKPIs.threeDSChallengeIsAbsolute
       ? forterKPIs.threeDSChallengeReduction / 100
@@ -99,17 +146,24 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const futureEmeaAbandonmentRate = forterKPIs.threeDSAbandonmentIsAbsolute
       ? forterKPIs.threeDSAbandonmentImprovement / 100
       : Math.max(0, emeaAbandonmentRate * (1 - forterKPIs.threeDSAbandonmentImprovement / 100));
-      
-    const emea3DSApprovalImpact = 1 - futureEmea3DSRate * futureEmeaAbandonmentRate;
     
     const futureEmeaManualReviewRate = forterKPIs.manualReviewIsAbsolute
       ? forterKPIs.manualReviewReduction / 100
       : emeaManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
-      
-    const emeaManualReviewImpact = 1 - futureEmeaManualReviewRate * 0.02;
-    const futureEmeaCompleteRate = futureEmeaBankApproval * (forterKPIs.fraudApprovalRate / 100) * emea3DSApprovalImpact * emeaManualReviewImpact;
+    
+    const futureEmeaFraudApproved = emeaRevenue * futureEmeaFraudApproval;
+    const futureEmeaTo3DS = futureEmeaFraudApproved * futureEmea3DSRate;
+    const futureEmea3DSAbandoned = futureEmeaTo3DS * futureEmeaAbandonmentRate;
+    const futureEmeaPost3DSSuccess = futureEmeaTo3DS - futureEmea3DSAbandoned;
+    const futureEmeaExempt3DS = futureEmeaFraudApproved * (1 - futureEmea3DSRate);
+    const futureEmeaToAuth = futureEmeaPost3DSSuccess + futureEmeaExempt3DS;
+    const futureEmeaBankApproved = futureEmeaToAuth * futureEmeaBankApproval;
+    const futureEmeaManualReview = futureEmeaBankApproved * futureEmeaManualReviewRate;
+    const futureEmeaManualAbandoned = futureEmeaManualReview * 0.02;
+    const futureEmeaCompleted = futureEmeaBankApproved - futureEmeaManualAbandoned;
+    const futureEmeaCompleteRate = (futureEmeaCompleted / emeaRevenue) * 100;
 
-    // APAC calculations
+    // APAC calculations - correct order: Fraud → 3DS → Bank → Manual Review
     const apacBankDeclineRate = (data.apacIssuingBankDeclineRate ?? 7) / 100;
     const apacBankApproval = 1 - apacBankDeclineRate;
     const apacFraudApproval =
@@ -120,10 +174,24 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const apac3DSRate = (data.apac3DSChallengeRate ?? 0) / 100;
     const apacAbandonmentRate = getAbandonmentRate('apac');
     const apacManualReviewRate = (data.apacManualReviewRate ?? 0) / 100;
-    const currentApacCompleteRate = apacBankApproval * apacFraudApproval * (1 - apac3DSRate * apacAbandonmentRate) * (1 - apacManualReviewRate * 0.03);
     
+    // Current state
+    const currentApacFraudApproved = apacRevenue * apacFraudApproval;
+    const currentApacTo3DS = currentApacFraudApproved * apac3DSRate;
+    const currentApac3DSAbandoned = currentApacTo3DS * apacAbandonmentRate;
+    const currentApacPost3DSSuccess = currentApacTo3DS - currentApac3DSAbandoned;
+    const currentApacExempt3DS = currentApacFraudApproved * (1 - apac3DSRate);
+    const currentApacToAuth = currentApacPost3DSSuccess + currentApacExempt3DS;
+    const currentApacBankApproved = currentApacToAuth * apacBankApproval;
+    const currentApacManualReview = currentApacBankApproved * apacManualReviewRate;
+    const currentApacManualAbandoned = currentApacManualReview * 0.03;
+    const currentApacCompleted = currentApacBankApproved - currentApacManualAbandoned;
+    const currentApacCompleteRate = (currentApacCompleted / apacRevenue) * 100;
+    
+    // Future state
     const futureApacBankDeclineRate = apacBankDeclineRate * (1 - bankDeclineImprovement);
     const futureApacBankApproval = Math.min(0.99, 1 - futureApacBankDeclineRate);
+    const futureApacFraudApproval = forterKPIs.fraudApprovalRate / 100;
     
     const futureApac3DSRate = forterKPIs.threeDSChallengeIsAbsolute
       ? forterKPIs.threeDSChallengeReduction / 100
@@ -132,20 +200,27 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const futureApacAbandonmentRate = forterKPIs.threeDSAbandonmentIsAbsolute
       ? forterKPIs.threeDSAbandonmentImprovement / 100
       : Math.max(0, apacAbandonmentRate * (1 - forterKPIs.threeDSAbandonmentImprovement / 100));
-      
-    const apac3DSApprovalImpact = 1 - futureApac3DSRate * futureApacAbandonmentRate;
     
     const futureApacManualReviewRate = forterKPIs.manualReviewIsAbsolute
       ? forterKPIs.manualReviewReduction / 100
       : apacManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
-      
-    const apacManualReviewImpact = 1 - futureApacManualReviewRate * 0.02;
-    const futureApacCompleteRate = futureApacBankApproval * (forterKPIs.fraudApprovalRate / 100) * apac3DSApprovalImpact * apacManualReviewImpact;
+    
+    const futureApacFraudApproved = apacRevenue * futureApacFraudApproval;
+    const futureApacTo3DS = futureApacFraudApproved * futureApac3DSRate;
+    const futureApac3DSAbandoned = futureApacTo3DS * futureApacAbandonmentRate;
+    const futureApacPost3DSSuccess = futureApacTo3DS - futureApac3DSAbandoned;
+    const futureApacExempt3DS = futureApacFraudApproved * (1 - futureApac3DSRate);
+    const futureApacToAuth = futureApacPost3DSSuccess + futureApacExempt3DS;
+    const futureApacBankApproved = futureApacToAuth * futureApacBankApproval;
+    const futureApacManualReview = futureApacBankApproved * futureApacManualReviewRate;
+    const futureApacManualAbandoned = futureApacManualReview * 0.02;
+    const futureApacCompleted = futureApacBankApproved - futureApacManualAbandoned;
+    const futureApacCompleteRate = (futureApacCompleted / apacRevenue) * 100;
 
     // Calculate GMV uplift
-    const amerGMVUplift = amerRevenue * (futureAmerCompleteRate - currentAmerCompleteRate);
-    const emeaGMVUplift = emeaRevenue * (futureEmeaCompleteRate - currentEmeaCompleteRate);
-    const apacGMVUplift = apacRevenue * (futureApacCompleteRate - currentApacCompleteRate);
+    const amerGMVUplift = futureAmerCompleted - currentAmerCompleted;
+    const emeaGMVUplift = futureEmeaCompleted - currentEmeaCompleted;
+    const apacGMVUplift = futureApacCompleted - currentApacCompleted;
     const totalGMVUplift = amerGMVUplift + emeaGMVUplift + apacGMVUplift;
 
     // Chargeback calculations
@@ -155,12 +230,12 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
     const chargebackSavings = currentChargebacks - futureChargebacks;
 
     return {
-      currentAmerCompleteRate: currentAmerCompleteRate * 100,
-      futureAmerCompleteRate: futureAmerCompleteRate * 100,
-      currentEmeaCompleteRate: currentEmeaCompleteRate * 100,
-      futureEmeaCompleteRate: futureEmeaCompleteRate * 100,
-      currentApacCompleteRate: currentApacCompleteRate * 100,
-      futureApacCompleteRate: futureApacCompleteRate * 100,
+      currentAmerCompleteRate,
+      futureAmerCompleteRate,
+      currentEmeaCompleteRate,
+      futureEmeaCompleteRate,
+      currentApacCompleteRate,
+      futureApacCompleteRate,
       totalGMVUplift,
       amerGMVUplift,
       emeaGMVUplift,
@@ -174,6 +249,25 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
       amerRevenue,
       emeaRevenue,
       apacRevenue,
+      // Store intermediate values for breakdown
+      amer: {
+        current: { fraudApproved: currentAmerFraudApproved, to3DS: currentAmerTo3DS, abandoned3DS: currentAmer3DSAbandoned, post3DS: currentAmerPost3DSSuccess, exempt3DS: currentAmerExempt3DS, toAuth: currentAmerToAuth, bankApproved: currentAmerBankApproved, manualReview: currentAmerManualReview, manualAbandoned: currentAmerManualAbandoned, completed: currentAmerCompleted },
+        future: { fraudApproved: futureAmerFraudApproved, to3DS: futureAmerTo3DS, abandoned3DS: futureAmer3DSAbandoned, post3DS: futureAmerPost3DSSuccess, exempt3DS: futureAmerExempt3DS, toAuth: futureAmerToAuth, bankApproved: futureAmerBankApproved, manualReview: futureAmerManualReview, manualAbandoned: futureAmerManualAbandoned, completed: futureAmerCompleted },
+        rates: { fraud: amerFraudApproval, threeds: amer3DSRate, abandonment: amerAbandonmentRate, bank: amerBankApproval, manualReview: amerManualReviewRate },
+        futureRates: { fraud: futureAmerFraudApproval, threeds: futureAmer3DSRate, abandonment: futureAmerAbandonmentRate, bank: futureAmerBankApproval, manualReview: futureAmerManualReviewRate }
+      },
+      emea: {
+        current: { fraudApproved: currentEmeaFraudApproved, to3DS: currentEmeaTo3DS, abandoned3DS: currentEmea3DSAbandoned, post3DS: currentEmeaPost3DSSuccess, exempt3DS: currentEmeaExempt3DS, toAuth: currentEmeaToAuth, bankApproved: currentEmeaBankApproved, manualReview: currentEmeaManualReview, manualAbandoned: currentEmeaManualAbandoned, completed: currentEmeaCompleted },
+        future: { fraudApproved: futureEmeaFraudApproved, to3DS: futureEmeaTo3DS, abandoned3DS: futureEmea3DSAbandoned, post3DS: futureEmeaPost3DSSuccess, exempt3DS: futureEmeaExempt3DS, toAuth: futureEmeaToAuth, bankApproved: futureEmeaBankApproved, manualReview: futureEmeaManualReview, manualAbandoned: futureEmeaManualAbandoned, completed: futureEmeaCompleted },
+        rates: { fraud: emeaFraudApproval, threeds: emea3DSRate, abandonment: emeaAbandonmentRate, bank: emeaBankApproval, manualReview: emeaManualReviewRate },
+        futureRates: { fraud: futureEmeaFraudApproval, threeds: futureEmea3DSRate, abandonment: futureEmeaAbandonmentRate, bank: futureEmeaBankApproval, manualReview: futureEmeaManualReviewRate }
+      },
+      apac: {
+        current: { fraudApproved: currentApacFraudApproved, to3DS: currentApacTo3DS, abandoned3DS: currentApac3DSAbandoned, post3DS: currentApacPost3DSSuccess, exempt3DS: currentApacExempt3DS, toAuth: currentApacToAuth, bankApproved: currentApacBankApproved, manualReview: currentApacManualReview, manualAbandoned: currentApacManualAbandoned, completed: currentApacCompleted },
+        future: { fraudApproved: futureApacFraudApproved, to3DS: futureApacTo3DS, abandoned3DS: futureApac3DSAbandoned, post3DS: futureApacPost3DSSuccess, exempt3DS: futureApacExempt3DS, toAuth: futureApacToAuth, bankApproved: futureApacBankApproved, manualReview: futureApacManualReview, manualAbandoned: futureApacManualAbandoned, completed: futureApacCompleted },
+        rates: { fraud: apacFraudApproval, threeds: apac3DSRate, abandonment: apacAbandonmentRate, bank: apacBankApproval, manualReview: apacManualReviewRate },
+        futureRates: { fraud: futureApacFraudApproval, threeds: futureApac3DSRate, abandonment: futureApacAbandonmentRate, bank: futureApacBankApproval, manualReview: futureApacManualReviewRate }
+      }
     };
   };
 
@@ -195,60 +289,9 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
   const showGMVBreakdown = () => {
     const calculations = [];
     
-    // Helper to add regional breakdown
+    // Helper to add regional breakdown with detailed 3DS flow
     const addRegionalBreakdown = (region: 'AMER' | 'EMEA' | 'APAC', revenue: number, uplift: number) => {
-      const bankDeclineRate = region === 'AMER' 
-        ? (data.amerIssuingBankDeclineRate || 7) / 100
-        : region === 'EMEA'
-        ? (data.emeaIssuingBankDeclineRate || 5) / 100
-        : (data.apacIssuingBankDeclineRate || 7) / 100;
-      
-      const fraudApproval = region === 'AMER'
-        ? (data.amerFraudCheckTiming === "pre-auth" 
-          ? (data.amerPreAuthApprovalRate || 95) / 100 
-          : (data.amerPostAuthApprovalRate || 98.5) / 100)
-        : region === 'EMEA'
-        ? (data.emeaPreAuthApprovalRate || 95) / 100
-        : (data.apacFraudCheckTiming === "pre-auth"
-          ? (data.apacPreAuthApprovalRate || 95) / 100
-          : (data.apacPostAuthApprovalRate || 98.5) / 100);
-      
-      const threeDSRate = region === 'AMER'
-        ? (data.amer3DSChallengeRate || 0) / 100
-        : region === 'EMEA'
-        ? (data.emea3DSChallengeRate || 0) / 100
-        : (data.apac3DSChallengeRate || 0) / 100;
-      
-      const manualReviewRate = region === 'AMER'
-        ? (data.amerManualReviewRate || 0) / 100
-        : region === 'EMEA'
-        ? (data.emeaManualReviewRate || 0) / 100
-        : (data.apacManualReviewRate || 0) / 100;
-      
-      const currentBankApproval = 1 - bankDeclineRate;
-      const abandonmentRate = getAbandonmentRate(region.toLowerCase() as 'amer' | 'emea' | 'apac');
-      const current3DSImpact = 1 - threeDSRate * abandonmentRate;
-      const currentManualReviewImpact = 1 - manualReviewRate * 0.03;
-      const currentCompleteRate = currentBankApproval * fraudApproval * current3DSImpact * currentManualReviewImpact;
-      
-      // Future state
-      const bankDeclineImprovement = forterKPIs.bankDeclineImprovement / 100;
-      const futureBankDeclineRate = bankDeclineRate * (1 - bankDeclineImprovement);
-      const futureBankApproval = Math.min(0.99, 1 - futureBankDeclineRate);
-      
-      // Apply 3DS optimization
-      const forter3DSReduction = forterKPIs.threeDSChallengeReduction / 100;
-      const future3DSRate = threeDSRate * (1 - forter3DSReduction);
-      const forterAbandonmentImprovement = forterKPIs.threeDSAbandonmentImprovement / 100;
-      const futureAbandonmentRate = Math.max(0, abandonmentRate - forterAbandonmentImprovement);
-      const future3DSImpact = 1 - future3DSRate * futureAbandonmentRate;
-      
-      const forterManualReviewReduction = forterKPIs.manualReviewReduction / 100;
-      const futureManualReviewRate = manualReviewRate * (1 - forterManualReviewReduction);
-      const futureManualReviewImpact = 1 - futureManualReviewRate * 0.02;
-      
-      const forterFraudApproval = forterKPIs.fraudApprovalRate / 100;
-      const futureCompleteRate = futureBankApproval * forterFraudApproval * future3DSImpact * futureManualReviewImpact;
+      const regionData = region === 'AMER' ? metrics.amer : region === 'EMEA' ? metrics.emea : metrics.apac;
       
       // Add section header
       calculations.push({ 
@@ -260,56 +303,84 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
       // 1. Pre-Auth Fraud Decisioning
       calculations.push(
         { label: "1. PRE-AUTH FRAUD DECISIONING", value: "", isSubheader: true },
-        { label: "   Gross Sales Attempts", value: formatCurrency(revenue) },
-        { label: "   Current Pre-Auth Approval Rate", value: `${(fraudApproval * 100).toFixed(2)}%` },
-        { label: "   Pre-Auth Approved Sales (Current)", value: formatCurrency(revenue * fraudApproval), formula: `${formatCurrency(revenue)} × ${(fraudApproval * 100).toFixed(2)}%` },
-        { label: "   Forter Pre-Auth Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` },
-        { label: "   Pre-Auth Approved Sales (Forter)", value: formatCurrency(revenue * forterFraudApproval), formula: `${formatCurrency(revenue)} × ${forterKPIs.fraudApprovalRate}%` }
+        { label: "   Non-EEA eCommerce gross sales attempts ($)", value: formatCurrency(revenue) },
+        { label: "   Transaction average order value ($)", value: formatCurrency(revenue / 1) },
+        { label: "   Pre-Auth fraud approval rate (%)", value: `${(regionData.rates.fraud * 100).toFixed(2)}%` },
+        { label: "   Pre-Auth fraud approved sales ($)", value: formatCurrency(regionData.current.fraudApproved), formula: `${formatCurrency(revenue)} × ${(regionData.rates.fraud * 100).toFixed(2)}%` }
       );
       
-      // 2. 3DS Flow
-      if (threeDSRate > 0) {
-        calculations.push(
-          { label: "2. 3DS CHALLENGE FLOW", value: "", isSubheader: true },
-          { label: "   Current 3DS Challenge Rate", value: `${(threeDSRate * 100).toFixed(2)}%` },
-          { label: "   Current 3DS Abandonment Rate", value: `${(abandonmentRate * 100).toFixed(2)}%` },
-          { label: "   Current 3DS Abandonment Impact", value: `${((1 - current3DSImpact) * 100).toFixed(2)}%`, formula: `${(threeDSRate * 100).toFixed(2)}% × ${(abandonmentRate * 100).toFixed(2)}% abandonment` },
-          { label: "   Forter 3DS Challenge Rate", value: `${(future3DSRate * 100).toFixed(2)}%`, formula: `${(threeDSRate * 100).toFixed(2)}% × (1 - ${forterKPIs.threeDSChallengeReduction}%)` },
-          { label: "   Forter 3DS Abandonment Improvement", value: `${forterKPIs.threeDSAbandonmentImprovement}%` },
-          { label: "   Forter 3DS Abandonment Rate", value: `${(futureAbandonmentRate * 100).toFixed(2)}%`, formula: `${(abandonmentRate * 100).toFixed(2)}% - ${forterKPIs.threeDSAbandonmentImprovement}%` },
-          { label: "   Forter 3DS Impact", value: `${((1 - future3DSImpact) * 100).toFixed(2)}%`, formula: `${(future3DSRate * 100).toFixed(2)}% × ${(futureAbandonmentRate * 100).toFixed(2)}%` }
-        );
-      }
+      // 2. AMER/APAC 3DS Flow (detailed breakdown matching spreadsheet)
+      calculations.push(
+        { label: "2. AMER+APAC 3DS Flow", value: "", isSubheader: true },
+        { label: "   Transactions going through 3DS (%)", value: `${(regionData.rates.threeds * 100).toFixed(2)}%` },
+        { label: "   Credit card transactions sent to 3DS (#)", value: Math.round(regionData.current.to3DS / (revenue / 1)) },
+        { label: "   Credit card transactions sent to 3DS ($)", value: formatCurrency(regionData.current.to3DS) },
+        { label: "   Transactions 3DS failure and abandonment rate (%)", value: `${(regionData.rates.abandonment * 100).toFixed(2)}%` },
+        { label: "   3DS failure and abandonment transactions (#)", value: Math.round(regionData.current.abandoned3DS / (revenue / 1)) },
+        { label: "   3DS failure and abandonment transactions ($)", value: formatCurrency(regionData.current.abandoned3DS) },
+        { label: "   Post-3DS success sent to authorization (#)", value: Math.round(regionData.current.post3DS / (revenue / 1)) },
+        { label: "   Exempt credit card transactions (#)", value: Math.round(regionData.current.exempt3DS / (revenue / 1)) },
+        { label: "   Exempt credit card transactions ($)", value: formatCurrency(regionData.current.exempt3DS) },
+        { label: "   Total post-3DS success sent to authorization (#)", value: Math.round(regionData.current.toAuth / (revenue / 1)) },
+        { label: "   Total post-3DS success sent to authorization ($)", value: formatCurrency(regionData.current.toAuth) }
+      );
       
       // 3. Issuing Bank Authorization
       calculations.push(
-        { label: "3. ISSUING BANK AUTHORIZATION", value: "", isSubheader: true },
-        { label: "   Current Bank Decline Rate", value: `${(bankDeclineRate * 100).toFixed(2)}%` },
-        { label: "   Current Bank Approval Rate", value: `${(currentBankApproval * 100).toFixed(2)}%`, formula: `100% - ${(bankDeclineRate * 100).toFixed(2)}%` },
-        { label: "   Forter Bank Decline Improvement", value: `${forterKPIs.bankDeclineImprovement}%` },
-        { label: "   Forter Bank Decline Rate", value: `${(futureBankDeclineRate * 100).toFixed(2)}%`, formula: `${(bankDeclineRate * 100).toFixed(2)}% × (1 - ${forterKPIs.bankDeclineImprovement}%)` },
-        { label: "   Forter Bank Approval Rate", value: `${(futureBankApproval * 100).toFixed(2)}%`, formula: `100% - ${(futureBankDeclineRate * 100).toFixed(2)}%` }
+        { label: "3. Issuing Bank Decisioning", value: "", isSubheader: true },
+        { label: "   Declined transactions by issuing bank (%)", value: `${((1 - regionData.rates.bank) * 100).toFixed(2)}%` },
+        { label: "   Issuing bank declines ($)", value: formatCurrency(regionData.current.toAuth * (1 - regionData.rates.bank)) },
+        { label: "   Post Auth fraud approved sales ($)", value: formatCurrency(regionData.current.bankApproved) }
       );
       
-      // 4. Manual Review
-      if (manualReviewRate > 0) {
+      // 4. Manual Review (if applicable)
+      if (regionData.rates.manualReview > 0) {
         calculations.push(
-          { label: "4. MANUAL REVIEW", value: "", isSubheader: true },
-          { label: "   Current Manual Review Rate", value: `${(manualReviewRate * 100).toFixed(2)}%` },
-          { label: "   Current Manual Review Impact", value: `${((1 - currentManualReviewImpact) * 100).toFixed(2)}%`, formula: `${(manualReviewRate * 100).toFixed(2)}% × 3% abandonment` },
-          { label: "   Forter Manual Review Reduction", value: `${forterKPIs.manualReviewReduction}%` },
-          { label: "   Forter Manual Review Rate", value: `${(futureManualReviewRate * 100).toFixed(2)}%`, formula: `${(manualReviewRate * 100).toFixed(2)}% × (1 - ${forterKPIs.manualReviewReduction}%)` },
-          { label: "   Forter Manual Review Impact", value: `${((1 - futureManualReviewImpact) * 100).toFixed(2)}%`, formula: `${(futureManualReviewRate * 100).toFixed(2)}% × 2% abandonment` }
+          { label: "4. Post-Auth Fraud Decisioning", value: "", isSubheader: true },
+          { label: "   Post Auth Fraud approval rate (%)", value: "100.00%" },
+          { label: "   Post Auth fraud approved sales (#)", value: Math.round(regionData.current.bankApproved / (revenue / 1)) },
+          { label: "   Post Auth fraud approved sales ($)", value: formatCurrency(regionData.current.bankApproved) }
+        );
+        
+        calculations.push(
+          { label: "5. Alternative Payment Methods", value: "", isSubheader: true },
+          { label: "   Alternative payment methods transaction (%)", value: "0.00%" },
+          { label: "   Alternative payment methods approved sales (#)", value: "0" },
+          { label: "   Alternative payment methods approved sales ($)", value: "$0" }
         );
       }
       
-      // Complete Rates
+      // Current State Summary
       calculations.push(
-        { label: "COMPLETE RATES", value: "", isSubheader: true },
-        { label: "   Current Complete Rate", value: `${(currentCompleteRate * 100).toFixed(2)}%`, formula: `${(currentBankApproval * 100).toFixed(2)}% × ${(fraudApproval * 100).toFixed(2)}%${threeDSRate > 0 ? ` × ${(current3DSImpact * 100).toFixed(2)}%` : ''}${manualReviewRate > 0 ? ` × ${(currentManualReviewImpact * 100).toFixed(2)}%` : ''}` },
-        { label: "   Forter Complete Rate", value: `${(futureCompleteRate * 100).toFixed(2)}%`, formula: `${(futureBankApproval * 100).toFixed(2)}% × ${forterKPIs.fraudApprovalRate}%${threeDSRate > 0 || future3DSRate > 0 ? ` × ${(future3DSImpact * 100).toFixed(2)}%` : ''}${manualReviewRate > 0 ? ` × ${(futureManualReviewImpact * 100).toFixed(2)}%` : ''}` },
-        { label: "   GMV Uplift", value: formatCurrency(uplift), formula: `${formatCurrency(revenue)} × (${(futureCompleteRate * 100).toFixed(2)}% - ${(currentCompleteRate * 100).toFixed(2)}%)`, isResult: true }
+        { label: "CURRENT STATE SUMMARY", value: "", isSubheader: true },
+        { label: "   Total non-EEA sales completion (in-scope) (#)", value: Math.round(regionData.current.completed / (revenue / 1)) },
+        { label: "   Total non-EEA sales completion (in-scope) ($)", value: formatCurrency(regionData.current.completed) },
+        { label: "   Total non-EEA sales completion (in-scope, deduped) ($)", value: formatCurrency(regionData.current.completed) },
+        { label: "   Completion rate (%)", value: `${(regionData.current.completed / revenue * 100).toFixed(2)}%` }
       );
+      
+      // Future State with Forter
+      calculations.push(
+        { label: "FORTER STATE", value: "", isHeader: true },
+        { label: "   Pre-Auth fraud approval rate (%)", value: `${(regionData.futureRates.fraud * 100).toFixed(2)}%` },
+        { label: "   Pre-Auth fraud approved sales ($)", value: formatCurrency(regionData.future.fraudApproved) },
+        { label: "   Transactions going through 3DS (%)", value: `${(regionData.futureRates.threeds * 100).toFixed(2)}%` },
+        { label: "   Credit card transactions sent to 3DS ($)", value: formatCurrency(regionData.future.to3DS) },
+        { label: "   3DS abandonment rate (%)", value: `${(regionData.futureRates.abandonment * 100).toFixed(2)}%` },
+        { label: "   3DS abandonment ($)", value: formatCurrency(regionData.future.abandoned3DS) },
+        { label: "   Total to authorization ($)", value: formatCurrency(regionData.future.toAuth) },
+        { label: "   Declined transactions by issuing bank (%)", value: `${((1 - regionData.futureRates.bank) * 100).toFixed(2)}%` },
+        { label: "   Post Auth approved sales ($)", value: formatCurrency(regionData.future.bankApproved) },
+        { label: "   Forter Completion ($)", value: formatCurrency(regionData.future.completed) },
+        { label: "   Forter Completion Rate (%)", value: `${(regionData.future.completed / revenue * 100).toFixed(2)}%` }
+      );
+      
+      calculations.push({
+        label: "   GMV Uplift",
+        value: formatCurrency(uplift),
+        formula: `${formatCurrency(regionData.future.completed)} - ${formatCurrency(regionData.current.completed)}`,
+        isResult: true
+      });
     };
 
     if (data.amerAnnualGMV) {
