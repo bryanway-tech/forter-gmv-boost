@@ -306,6 +306,12 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
       }).format(count);
     };
     
+    // Helper to calculate percentage impact (forter / current - 1)
+    const calculatePercentageImpact = (current: number, forter: number): string => {
+      if (current === 0) return "N/A";
+      return `${((forter / current - 1) * 100).toFixed(2)}%`;
+    };
+    
     // Helper to add regional breakdown with three-column format
     const addRegionalBreakdown = (region: 'AMER' | 'EMEA' | 'APAC', revenue: number, uplift: number) => {
       const regionData = region === 'AMER' ? metrics.amer : region === 'EMEA' ? metrics.emea : metrics.apac;
@@ -352,7 +358,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
         { 
           label: "Pre-Auth fraud approval rate (%)", 
           currentValue: `${(regionData.rates.fraud * 100).toFixed(2)}%`,
-          impactValue: `${((regionData.futureRates.fraud / regionData.rates.fraud - 1) * 100).toFixed(2)}%`,
+          impactValue: calculatePercentageImpact(regionData.rates.fraud, regionData.futureRates.fraud),
           forterValue: `${(regionData.futureRates.fraud * 100).toFixed(2)}%`,
           isResult: true
         },
@@ -390,8 +396,9 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
         { 
           label: "Transactions going through 3DS (%)", 
           currentValue: `${(regionData.rates.threeds * 100).toFixed(2)}%`,
-          impactValue: `${((regionData.futureRates.threeds - regionData.rates.threeds) * 100).toFixed(2)}%`,
-          forterValue: `${(regionData.futureRates.threeds * 100).toFixed(2)}%`
+          impactValue: calculatePercentageImpact(regionData.rates.threeds, regionData.futureRates.threeds),
+          forterValue: `${(regionData.futureRates.threeds * 100).toFixed(2)}%`,
+          isBad: true
         },
         { 
           label: "Credit card transactions sent to 3DS (#)", 
@@ -410,8 +417,9 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
         { 
           label: "Transaction 3DS failure and abandonment rate (%)", 
           currentValue: `${(regionData.rates.abandonment * 100).toFixed(2)}%`,
-          impactValue: `${((regionData.futureRates.abandonment - regionData.rates.abandonment) * 100).toFixed(2)}%`,
-          forterValue: `${(regionData.futureRates.abandonment * 100).toFixed(2)}%`
+          impactValue: calculatePercentageImpact(regionData.rates.abandonment, regionData.futureRates.abandonment),
+          forterValue: `${(regionData.futureRates.abandonment * 100).toFixed(2)}%`,
+          isBad: true
         },
         { 
           label: "3DS failure and abandonment transactions (#)", 
@@ -477,7 +485,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
         { 
           label: "Declined transactions by issuing bank (%)", 
           currentValue: `${((1 - regionData.rates.bank) * 100).toFixed(2)}%`,
-          impactValue: `${(((1 - regionData.futureRates.bank) - (1 - regionData.rates.bank)) * 100).toFixed(2)}%`,
+          impactValue: calculatePercentageImpact(1 - regionData.rates.bank, 1 - regionData.futureRates.bank),
           forterValue: `${((1 - regionData.futureRates.bank) * 100).toFixed(2)}%`,
           isBad: true
         },
@@ -593,7 +601,7 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onEditManual, onEditCh
         { 
           label: "Completion rate (%)", 
           currentValue: `${((regionData.current.completed / revenue) * 100).toFixed(2)}%`,
-          impactValue: `${(((regionData.future.completed / revenue) - (regionData.current.completed / revenue)) * 100).toFixed(2)}%`,
+          impactValue: calculatePercentageImpact(regionData.current.completed / revenue, regionData.future.completed / revenue),
           forterValue: `${((regionData.future.completed / revenue) * 100).toFixed(2)}%`,
           isResult: true
         }

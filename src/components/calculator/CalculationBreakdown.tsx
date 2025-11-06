@@ -113,15 +113,27 @@ export const CalculationBreakdown = ({
                         {formatValue(calc.currentValue)}
                       </div>
                       <div className={`text-right font-medium ${
-                        calc.isResult 
-                          ? "text-primary" 
-                          : calc.isBad
-                            ? String(calc.impactValue).includes("-")
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-destructive"
-                            : String(calc.impactValue).includes("-") 
-                              ? "text-destructive" 
-                              : "text-green-600 dark:text-green-400"
+                        (() => {
+                          const impactStr = String(calc.impactValue);
+                          // Neutral values (N/A, 0, empty)
+                          if (!impactStr || impactStr === "N/A" || impactStr === "0" || impactStr === "$0" || impactStr === "0.00%" || impactStr === "+0" || impactStr === "+$0") {
+                            return "text-foreground";
+                          }
+                          // Result lines use primary color
+                          if (calc.isResult) {
+                            return "text-primary";
+                          }
+                          // For "bad" metrics (declines, abandonment), negative is favorable (green)
+                          if (calc.isBad) {
+                            return impactStr.includes("-") 
+                              ? "text-green-600 dark:text-green-400" 
+                              : "text-destructive";
+                          }
+                          // For normal metrics, positive is favorable (green)
+                          return impactStr.includes("-") 
+                            ? "text-destructive" 
+                            : "text-green-600 dark:text-green-400";
+                        })()
                       }`}>
                         {formatImpact(calc.impactValue)}
                       </div>
