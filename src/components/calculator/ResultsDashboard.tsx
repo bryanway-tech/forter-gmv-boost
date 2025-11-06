@@ -192,6 +192,70 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
     setBreakdownOpen(true);
   };
 
+  const showCompleteRateBreakdown = (region: 'amer' | 'emea' | 'apac') => {
+    const calculations = [];
+    
+    if (region === 'amer') {
+      const bankDeclineRate = data.amerIssuingBankDeclineRate || 7;
+      const bankApproval = 1 - bankDeclineRate / 100;
+      const fraudApproval = data.amerFraudCheckTiming === "pre-auth"
+        ? (data.amerPreAuthApprovalRate || 95) / 100
+        : (data.amerPostAuthApprovalRate || 98.5) / 100;
+      
+      calculations.push(
+        { label: "Issuing Bank Decline Rate", value: `${bankDeclineRate}%` },
+        { label: "Bank Approval Rate", value: `${(bankApproval * 100).toFixed(2)}%`, formula: `100% - ${bankDeclineRate}%` },
+        { label: `Fraud Approval Rate (${data.amerFraudCheckTiming})`, value: `${(fraudApproval * 100).toFixed(2)}%` },
+        {
+          label: "Current Complete Rate",
+          value: `${metrics.currentAmerCompleteRate.toFixed(2)}%`,
+          formula: `${(bankApproval * 100).toFixed(2)}% × ${(fraudApproval * 100).toFixed(2)}%`,
+          isResult: true,
+        }
+      );
+    } else if (region === 'emea') {
+      const bankDeclineRate = data.emeaIssuingBankDeclineRate || 5;
+      const bankApproval = 1 - bankDeclineRate / 100;
+      const fraudApproval = (data.emeaPreAuthApprovalRate || 95) / 100;
+      
+      calculations.push(
+        { label: "Issuing Bank Decline Rate", value: `${bankDeclineRate}%` },
+        { label: "Bank Approval Rate", value: `${(bankApproval * 100).toFixed(2)}%`, formula: `100% - ${bankDeclineRate}%` },
+        { label: "Fraud Approval Rate (pre-auth)", value: `${(fraudApproval * 100).toFixed(2)}%` },
+        {
+          label: "Current Complete Rate",
+          value: `${metrics.currentEmeaCompleteRate.toFixed(2)}%`,
+          formula: `${(bankApproval * 100).toFixed(2)}% × ${(fraudApproval * 100).toFixed(2)}%`,
+          isResult: true,
+        }
+      );
+    } else {
+      const bankDeclineRate = data.apacIssuingBankDeclineRate || 7;
+      const bankApproval = 1 - bankDeclineRate / 100;
+      const fraudApproval = data.apacFraudCheckTiming === "pre-auth"
+        ? (data.apacPreAuthApprovalRate || 95) / 100
+        : (data.apacPostAuthApprovalRate || 98.5) / 100;
+      
+      calculations.push(
+        { label: "Issuing Bank Decline Rate", value: `${bankDeclineRate}%` },
+        { label: "Bank Approval Rate", value: `${(bankApproval * 100).toFixed(2)}%`, formula: `100% - ${bankDeclineRate}%` },
+        { label: `Fraud Approval Rate (${data.apacFraudCheckTiming})`, value: `${(fraudApproval * 100).toFixed(2)}%` },
+        {
+          label: "Current Complete Rate",
+          value: `${metrics.currentApacCompleteRate.toFixed(2)}%`,
+          formula: `${(bankApproval * 100).toFixed(2)}% × ${(fraudApproval * 100).toFixed(2)}%`,
+          isResult: true,
+        }
+      );
+    }
+
+    setBreakdownData({
+      title: `${region.toUpperCase()} Complete Rate Calculation`,
+      calculations,
+    });
+    setBreakdownOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -283,8 +347,14 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
               <div>
                 <h3 className="font-semibold mb-4 text-lg">AMER Region</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                    <span>Current Complete Rate</span>
+                  <div 
+                    className="flex justify-between items-center p-4 bg-muted rounded-lg cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => showCompleteRateBreakdown('amer')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Current Complete Rate</span>
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                    </div>
                     <span className="font-bold text-xl">
                       {formatPercent(metrics.currentAmerCompleteRate)}
                     </span>
@@ -312,8 +382,14 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
               <div>
                 <h3 className="font-semibold mb-4 text-lg">EMEA Region</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                    <span>Current Complete Rate</span>
+                  <div 
+                    className="flex justify-between items-center p-4 bg-muted rounded-lg cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => showCompleteRateBreakdown('emea')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Current Complete Rate</span>
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                    </div>
                     <span className="font-bold text-xl">
                       {formatPercent(metrics.currentEmeaCompleteRate)}
                     </span>
@@ -341,8 +417,14 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
               <div>
                 <h3 className="font-semibold mb-4 text-lg">APAC Region</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                    <span>Current Complete Rate</span>
+                  <div 
+                    className="flex justify-between items-center p-4 bg-muted rounded-lg cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => showCompleteRateBreakdown('apac')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Current Complete Rate</span>
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                    </div>
                     <span className="font-bold text-xl">
                       {formatPercent(metrics.currentApacCompleteRate)}
                     </span>
