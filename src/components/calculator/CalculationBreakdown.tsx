@@ -11,6 +11,8 @@ interface CalculationBreakdownProps {
     value: string | number;
     formula?: string;
     isResult?: boolean;
+    isHeader?: boolean;
+    isSubheader?: boolean;
   }[];
 }
 
@@ -46,33 +48,51 @@ export const CalculationBreakdown = ({
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh] pr-4">
-          <div className="space-y-4">
-            {calculations.map((calc, index) => (
-              <div key={index}>
-                <div
-                  className={`flex justify-between items-start gap-4 ${
-                    calc.isResult ? "font-bold text-lg" : ""
-                  }`}
-                >
-                  <div className="flex-1">
-                    <div className={calc.isResult ? "text-primary" : ""}>
-                      {calc.label}
-                    </div>
-                    {calc.formula && (
-                      <div className="text-xs text-muted-foreground font-mono mt-1 bg-muted p-2 rounded">
-                        {calc.formula}
+          <div className="space-y-3">
+            {calculations.map((calc, index) => {
+              if (calc.isHeader) {
+                return (
+                  <div key={index} className="text-center font-bold text-primary text-lg pt-4 pb-2">
+                    {calc.label}
+                  </div>
+                );
+              }
+              
+              if (calc.isSubheader) {
+                return (
+                  <div key={index} className="font-semibold text-sm text-muted-foreground pt-3 pb-1 uppercase tracking-wide">
+                    {calc.label}
+                  </div>
+                );
+              }
+              
+              return (
+                <div key={index}>
+                  <div
+                    className={`flex justify-between items-start gap-4 ${
+                      calc.isResult ? "font-bold text-lg pt-2" : ""
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <div className={calc.isResult ? "text-primary" : ""}>
+                        {calc.label}
                       </div>
-                    )}
+                      {calc.formula && (
+                        <div className="text-xs text-muted-foreground font-mono mt-1 bg-muted p-2 rounded">
+                          {calc.formula}
+                        </div>
+                      )}
+                    </div>
+                    <div className={`text-right whitespace-nowrap ${calc.isResult ? "text-primary" : ""}`}>
+                      {formatValue(calc.value)}
+                    </div>
                   </div>
-                  <div className={`text-right ${calc.isResult ? "text-primary" : ""}`}>
-                    {formatValue(calc.value)}
-                  </div>
+                  {!calc.isResult && !calc.isHeader && !calc.isSubheader && index < calculations.length - 1 && !calculations[index + 1]?.isHeader && !calculations[index + 1]?.isSubheader && (
+                    <Separator className="my-2" />
+                  )}
                 </div>
-                {!calc.isResult && index < calculations.length - 1 && (
-                  <Separator className="my-3" />
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       </DialogContent>

@@ -148,54 +148,144 @@ export const ResultsDashboard = ({ data, customerLogoUrl, onReset }: ResultsDash
 
   const showGMVBreakdown = () => {
     const calculations = [];
+    
+    // Helper to add regional breakdown
+    const addRegionalBreakdown = (region: 'AMER' | 'EMEA' | 'APAC', revenue: number, uplift: number) => {
+      const bankDeclineRate = region === 'AMER' 
+        ? (data.amerIssuingBankDeclineRate || 7) / 100
+        : region === 'EMEA'
+        ? (data.emeaIssuingBankDeclineRate || 5) / 100
+        : (data.apacIssuingBankDeclineRate || 7) / 100;
+      
+      const fraudApproval = region === 'AMER'
+        ? (data.amerFraudCheckTiming === "pre-auth" 
+          ? (data.amerPreAuthApprovalRate || 95) / 100 
+          : (data.amerPostAuthApprovalRate || 98.5) / 100)
+        : region === 'EMEA'
+        ? (data.emeaPreAuthApprovalRate || 95) / 100
+        : (data.apacFraudCheckTiming === "pre-auth"
+          ? (data.apacPreAuthApprovalRate || 95) / 100
+          : (data.apacPostAuthApprovalRate || 98.5) / 100);
+      
+      const threeDSRate = region === 'AMER'
+        ? (data.amer3DSChallengeRate || 0) / 100
+        : region === 'EMEA'
+        ? (data.emea3DSChallengeRate || 0) / 100
+        : (data.apac3DSChallengeRate || 0) / 100;
+      
+      const manualReviewRate = region === 'AMER'
+        ? (data.amerManualReviewRate || 0) / 100
+        : region === 'EMEA'
+        ? (data.emeaManualReviewRate || 0) / 100
+        : (data.apacManualReviewRate || 0) / 100;
+      
+      const currentBankApproval = 1 - bankDeclineRate;
+      const current3DSImpact = 1 - threeDSRate * 0.05;
+      const currentManualReviewImpact = 1 - manualReviewRate * 0.03;
+      const currentCompleteRate = currentBankApproval * fraudApproval * current3DSImpact * currentManualReviewImpact;
+      
+      // Future state
+      const bankDeclineImprovement = forterKPIs.bankDeclineImprovement / 100;
+      const futureBankDeclineRate = bankDeclineRate * (1 - bankDeclineImprovement);
+      const futureBankApproval = Math.min(0.99, 1 - futureBankDeclineRate);
+      
+      const forter3DSReduction = forterKPIs.threeDSChallengeReduction / 100;
+      const future3DSRate = threeDSRate * (1 - forter3DSReduction);
+      const future3DSApprovalImprovement = forterKPIs.threeDSApprovalImprovement / 100;
+      const future3DSImpact = 1 - future3DSRate * (0.05 - future3DSApprovalImprovement);
+      
+      const forterManualReviewReduction = forterKPIs.manualReviewReduction / 100;
+      const futureManualReviewRate = manualReviewRate * (1 - forterManualReviewReduction);
+      const futureManualReviewImpact = 1 - futureManualReviewRate * 0.02;
+      
+      const forterFraudApproval = forterKPIs.fraudApprovalRate / 100;
+      const futureCompleteRate = futureBankApproval * forterFraudApproval * future3DSImpact * futureManualReviewImpact;
+      
+      // Add section header
+      calculations.push({ 
+        label: `━━━━━ ${region} Region ━━━━━`, 
+        value: "", 
+        isHeader: true 
+      });
+      
+      // 1. Pre-Auth Fraud Decisioning
+      calculations.push(
+        { label: "1. PRE-AUTH FRAUD DECISIONING", value: "", isSubheader: true },
+        { label: "   Gross Sales Attempts", value: formatCurrency(revenue) },
+        { label: "   Current Pre-Auth Approval Rate", value: `${(fraudApproval * 100).toFixed(2)}%` },
+        { label: "   Pre-Auth Approved Sales (Current)", value: formatCurrency(revenue * fraudApproval), formula: `${formatCurrency(revenue)} × ${(fraudApproval * 100).toFixed(2)}%` },
+        { label: "   Forter Pre-Auth Approval Rate", value: `${forterKPIs.fraudApprovalRate}%` },
+        { label: "   Pre-Auth Approved Sales (Forter)", value: formatCurrency(revenue * forterFraudApproval), formula: `${formatCurrency(revenue)} × ${forterKPIs.fraudApprovalRate}%` }
+      );
+      
+      // 2. 3DS Flow
+      if (threeDSRate > 0) {
+        calculations.push(
+          { label: "2. 3DS CHALLENGE FLOW", value: "", isSubheader: true },
+          { label: "   Current 3DS Challenge Rate", value: `${(threeDSRate * 100).toFixed(2)}%` },
+          { label: "   Current 3DS Abandonment Impact", value: `${((1 - current3DSImpact) * 100).toFixed(2)}%`, formula: `${(threeDSRate * 100).toFixed(2)}% × 5% abandonment` },
+          { label: "   Forter 3DS Challenge Rate", value: `${(future3DSRate * 100).toFixed(2)}%`, formula: `${(threeDSRate * 100).toFixed(2)}% × (1 - ${forterKPIs.threeDSChallengeReduction}%)` },
+          { label: "   Forter 3DS Approval Improvement", value: `${forterKPIs.threeDSApprovalImprovement}%` },
+          { label: "   Forter 3DS Impact", value: `${((1 - future3DSImpact) * 100).toFixed(2)}%`, formula: `${(future3DSRate * 100).toFixed(2)}% × (5% - ${forterKPIs.threeDSApprovalImprovement}%)` }
+        );
+      }
+      
+      // 3. Issuing Bank Authorization
+      calculations.push(
+        { label: "3. ISSUING BANK AUTHORIZATION", value: "", isSubheader: true },
+        { label: "   Current Bank Decline Rate", value: `${(bankDeclineRate * 100).toFixed(2)}%` },
+        { label: "   Current Bank Approval Rate", value: `${(currentBankApproval * 100).toFixed(2)}%`, formula: `100% - ${(bankDeclineRate * 100).toFixed(2)}%` },
+        { label: "   Forter Bank Decline Improvement", value: `${forterKPIs.bankDeclineImprovement}%` },
+        { label: "   Forter Bank Decline Rate", value: `${(futureBankDeclineRate * 100).toFixed(2)}%`, formula: `${(bankDeclineRate * 100).toFixed(2)}% × (1 - ${forterKPIs.bankDeclineImprovement}%)` },
+        { label: "   Forter Bank Approval Rate", value: `${(futureBankApproval * 100).toFixed(2)}%`, formula: `100% - ${(futureBankDeclineRate * 100).toFixed(2)}%` }
+      );
+      
+      // 4. Manual Review
+      if (manualReviewRate > 0) {
+        calculations.push(
+          { label: "4. MANUAL REVIEW", value: "", isSubheader: true },
+          { label: "   Current Manual Review Rate", value: `${(manualReviewRate * 100).toFixed(2)}%` },
+          { label: "   Current Manual Review Impact", value: `${((1 - currentManualReviewImpact) * 100).toFixed(2)}%`, formula: `${(manualReviewRate * 100).toFixed(2)}% × 3% abandonment` },
+          { label: "   Forter Manual Review Reduction", value: `${forterKPIs.manualReviewReduction}%` },
+          { label: "   Forter Manual Review Rate", value: `${(futureManualReviewRate * 100).toFixed(2)}%`, formula: `${(manualReviewRate * 100).toFixed(2)}% × (1 - ${forterKPIs.manualReviewReduction}%)` },
+          { label: "   Forter Manual Review Impact", value: `${((1 - futureManualReviewImpact) * 100).toFixed(2)}%`, formula: `${(futureManualReviewRate * 100).toFixed(2)}% × 2% abandonment` }
+        );
+      }
+      
+      // Complete Rates
+      calculations.push(
+        { label: "COMPLETE RATES", value: "", isSubheader: true },
+        { label: "   Current Complete Rate", value: `${(currentCompleteRate * 100).toFixed(2)}%`, formula: `${(currentBankApproval * 100).toFixed(2)}% × ${(fraudApproval * 100).toFixed(2)}%${threeDSRate > 0 ? ` × ${(current3DSImpact * 100).toFixed(2)}%` : ''}${manualReviewRate > 0 ? ` × ${(currentManualReviewImpact * 100).toFixed(2)}%` : ''}` },
+        { label: "   Forter Complete Rate", value: `${(futureCompleteRate * 100).toFixed(2)}%`, formula: `${(futureBankApproval * 100).toFixed(2)}% × ${forterKPIs.fraudApprovalRate}%${threeDSRate > 0 || future3DSRate > 0 ? ` × ${(future3DSImpact * 100).toFixed(2)}%` : ''}${manualReviewRate > 0 ? ` × ${(futureManualReviewImpact * 100).toFixed(2)}%` : ''}` },
+        { label: "   GMV Uplift", value: formatCurrency(uplift), formula: `${formatCurrency(revenue)} × (${(futureCompleteRate * 100).toFixed(2)}% - ${(currentCompleteRate * 100).toFixed(2)}%)`, isResult: true }
+      );
+    };
 
     if (data.amerAnnualGMV) {
-      calculations.push(
-        { label: "AMER Revenue", value: metrics.amerRevenue },
-        { label: "Current Complete Rate", value: `${formatPercent(metrics.currentAmerCompleteRate)}` },
-        { label: "Future Complete Rate", value: `${formatPercent(metrics.futureAmerCompleteRate)}` },
-        {
-          label: "AMER GMV Uplift",
-          value: metrics.amerGMVUplift,
-          formula: `${formatCurrency(metrics.amerRevenue)} × (${formatPercent(metrics.futureAmerCompleteRate)} - ${formatPercent(metrics.currentAmerCompleteRate)})`,
-        }
-      );
+      addRegionalBreakdown('AMER', metrics.amerRevenue, metrics.amerGMVUplift);
     }
-
+    
     if (data.emeaAnnualGMV) {
-      calculations.push(
-        { label: "EMEA Revenue", value: metrics.emeaRevenue },
-        { label: "Current Complete Rate", value: `${formatPercent(metrics.currentEmeaCompleteRate)}` },
-        { label: "Future Complete Rate", value: `${formatPercent(metrics.futureEmeaCompleteRate)}` },
-        {
-          label: "EMEA GMV Uplift",
-          value: metrics.emeaGMVUplift,
-          formula: `${formatCurrency(metrics.emeaRevenue)} × (${formatPercent(metrics.futureEmeaCompleteRate)} - ${formatPercent(metrics.currentEmeaCompleteRate)})`,
-        }
-      );
+      addRegionalBreakdown('EMEA', metrics.emeaRevenue, metrics.emeaGMVUplift);
     }
-
+    
     if (data.apacAnnualGMV) {
-      calculations.push(
-        { label: "APAC Revenue", value: metrics.apacRevenue },
-        { label: "Current Complete Rate", value: `${formatPercent(metrics.currentApacCompleteRate)}` },
-        { label: "Future Complete Rate", value: `${formatPercent(metrics.futureApacCompleteRate)}` },
-        {
-          label: "APAC GMV Uplift",
-          value: metrics.apacGMVUplift,
-          formula: `${formatCurrency(metrics.apacRevenue)} × (${formatPercent(metrics.futureApacCompleteRate)} - ${formatPercent(metrics.currentApacCompleteRate)})`,
-        }
-      );
+      addRegionalBreakdown('APAC', metrics.apacRevenue, metrics.apacGMVUplift);
     }
 
+    calculations.push({ 
+      label: "━━━━━━━━━━━━━━━━━", 
+      value: "", 
+      isHeader: true 
+    });
     calculations.push({
-      label: "Total GMV Uplift",
+      label: "TOTAL GMV UPLIFT",
       value: metrics.totalGMVUplift,
       isResult: true,
     });
 
     setBreakdownData({
-      title: "GMV Uplift Calculation",
+      title: "GMV Uplift - Detailed Calculation",
       calculations,
     });
     setBreakdownOpen(true);
