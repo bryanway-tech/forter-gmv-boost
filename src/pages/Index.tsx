@@ -29,6 +29,7 @@ export type CalculatorData = {
   amerPostAuthApprovalRate?: number;
   amerIssuingBankDeclineRate?: number;
   amerFraudCheckTiming?: "pre-auth" | "post-auth";
+  amerCreditCardPct?: number; // % of transactions that are credit card
   amer3DSChallengeRate?: number;
   amer3DSAbandonmentRate?: number;
   amerManualReviewRate?: number;
@@ -41,6 +42,7 @@ export type CalculatorData = {
   emeaPostAuthApprovalRate?: number;
   emeaIssuingBankDeclineRate?: number;
   emeaFraudCheckTiming?: "pre-auth" | "post-auth";
+  emeaCreditCardPct?: number; // % of transactions that are credit card
   emea3DSChallengeRate?: number;
   emea3DSAbandonmentRate?: number;
   emeaManualReviewRate?: number;
@@ -53,6 +55,7 @@ export type CalculatorData = {
   apacPostAuthApprovalRate?: number;
   apacIssuingBankDeclineRate?: number;
   apacFraudCheckTiming?: "pre-auth" | "post-auth";
+  apacCreditCardPct?: number; // % of transactions that are credit card
   apac3DSChallengeRate?: number;
   apac3DSAbandonmentRate?: number;
   apacManualReviewRate?: number;

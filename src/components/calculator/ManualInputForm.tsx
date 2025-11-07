@@ -144,15 +144,17 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
     const amerFraudApproval = formData.amerFraudCheckTiming === "pre-auth"
       ? (formData.amerPreAuthApprovalRate || 95) / 100
       : (formData.amerPostAuthApprovalRate || 98.5) / 100;
+    const amerCreditCardPct = (formData.amerCreditCardPct ?? 100) / 100;
     const amer3DSRate = (formData.amer3DSChallengeRate || 0) / 100;
     const amerAbandonmentRate = getAbandonmentRate(formData.amer3DSAbandonmentRate);
     const amerManualReviewRate = (formData.amerManualReviewRate || 0) / 100;
 
     const currentAmerFraudApproved = amerRevenue * amerFraudApproval;
-    const currentAmerTo3DS = currentAmerFraudApproved * amer3DSRate;
+    const currentAmerCreditCard = currentAmerFraudApproved * amerCreditCardPct;
+    const currentAmerTo3DS = currentAmerCreditCard * amer3DSRate;
     const currentAmer3DSAbandoned = currentAmerTo3DS * amerAbandonmentRate;
     const currentAmerPost3DSSuccess = currentAmerTo3DS - currentAmer3DSAbandoned;
-    const currentAmerExempt3DS = currentAmerFraudApproved * (1 - amer3DSRate);
+    const currentAmerExempt3DS = currentAmerCreditCard * (1 - amer3DSRate);
     const currentAmerToAuth = currentAmerPost3DSSuccess + currentAmerExempt3DS;
     const currentAmerBankApproved = currentAmerToAuth * amerBankApproval;
     const currentAmerManualReview = currentAmerBankApproved * amerManualReviewRate;
@@ -174,10 +176,11 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
       : amerManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
 
     const futureAmerFraudApproved = amerRevenue * futureAmerFraudApproval;
-    const futureAmerTo3DS = futureAmerFraudApproved * futureAmer3DSRate;
+    const futureAmerCreditCard = futureAmerFraudApproved * amerCreditCardPct;
+    const futureAmerTo3DS = futureAmerCreditCard * futureAmer3DSRate;
     const futureAmer3DSAbandoned = futureAmerTo3DS * futureAmerAbandonmentRate;
     const futureAmerPost3DSSuccess = futureAmerTo3DS - futureAmer3DSAbandoned;
-    const futureAmerExempt3DS = futureAmerFraudApproved * (1 - futureAmer3DSRate);
+    const futureAmerExempt3DS = futureAmerCreditCard * (1 - futureAmer3DSRate);
     const futureAmerToAuth = futureAmerPost3DSSuccess + futureAmerExempt3DS;
     const futureAmerBankApproved = futureAmerToAuth * futureAmerBankApproval;
     const futureAmerManualReview = futureAmerBankApproved * futureAmerManualReviewRate;
@@ -188,15 +191,17 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
     const emeaBankDeclineRate = (formData.emeaIssuingBankDeclineRate ?? 5) / 100;
     const emeaBankApproval = 1 - emeaBankDeclineRate;
     const emeaFraudApproval = (formData.emeaPreAuthApprovalRate ?? 95) / 100;
+    const emeaCreditCardPct = (formData.emeaCreditCardPct ?? 100) / 100;
     const emea3DSRate = (formData.emea3DSChallengeRate ?? 0) / 100;
     const emeaAbandonmentRate = getAbandonmentRate(formData.emea3DSAbandonmentRate);
     const emeaManualReviewRate = (formData.emeaManualReviewRate ?? 0) / 100;
 
     const currentEmeaFraudApproved = emeaRevenue * emeaFraudApproval;
-    const currentEmeaTo3DS = currentEmeaFraudApproved * emea3DSRate;
+    const currentEmeaCreditCard = currentEmeaFraudApproved * emeaCreditCardPct;
+    const currentEmeaTo3DS = currentEmeaCreditCard * emea3DSRate;
     const currentEmea3DSAbandoned = currentEmeaTo3DS * emeaAbandonmentRate;
     const currentEmeaPost3DSSuccess = currentEmeaTo3DS - currentEmea3DSAbandoned;
-    const currentEmeaExempt3DS = currentEmeaFraudApproved * (1 - emea3DSRate);
+    const currentEmeaExempt3DS = currentEmeaCreditCard * (1 - emea3DSRate);
     const currentEmeaToAuth = currentEmeaPost3DSSuccess + currentEmeaExempt3DS;
     const currentEmeaBankApproved = currentEmeaToAuth * emeaBankApproval;
     const currentEmeaManualReview = currentEmeaBankApproved * emeaManualReviewRate;
@@ -217,10 +222,11 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
       : emeaManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
 
     const futureEmeaFraudApproved = emeaRevenue * futureEmeaFraudApproval;
-    const futureEmeaTo3DS = futureEmeaFraudApproved * futureEmea3DSRate;
+    const futureEmeaCreditCard = futureEmeaFraudApproved * emeaCreditCardPct;
+    const futureEmeaTo3DS = futureEmeaCreditCard * futureEmea3DSRate;
     const futureEmea3DSAbandoned = futureEmeaTo3DS * futureEmeaAbandonmentRate;
     const futureEmeaPost3DSSuccess = futureEmeaTo3DS - futureEmea3DSAbandoned;
-    const futureEmeaExempt3DS = futureEmeaFraudApproved * (1 - futureEmea3DSRate);
+    const futureEmeaExempt3DS = futureEmeaCreditCard * (1 - futureEmea3DSRate);
     const futureEmeaToAuth = futureEmeaPost3DSSuccess + futureEmeaExempt3DS;
     const futureEmeaBankApproved = futureEmeaToAuth * futureEmeaBankApproval;
     const futureEmeaManualReview = futureEmeaBankApproved * futureEmeaManualReviewRate;
@@ -233,15 +239,17 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
     const apacFraudApproval = formData.apacFraudCheckTiming === "pre-auth"
       ? (formData.apacPreAuthApprovalRate ?? 95) / 100
       : (formData.apacPostAuthApprovalRate ?? 98.5) / 100;
+    const apacCreditCardPct = (formData.apacCreditCardPct ?? 100) / 100;
     const apac3DSRate = (formData.apac3DSChallengeRate ?? 0) / 100;
     const apacAbandonmentRate = getAbandonmentRate(formData.apac3DSAbandonmentRate);
     const apacManualReviewRate = (formData.apacManualReviewRate ?? 0) / 100;
 
     const currentApacFraudApproved = apacRevenue * apacFraudApproval;
-    const currentApacTo3DS = currentApacFraudApproved * apac3DSRate;
+    const currentApacCreditCard = currentApacFraudApproved * apacCreditCardPct;
+    const currentApacTo3DS = currentApacCreditCard * apac3DSRate;
     const currentApac3DSAbandoned = currentApacTo3DS * apacAbandonmentRate;
     const currentApacPost3DSSuccess = currentApacTo3DS - currentApac3DSAbandoned;
-    const currentApacExempt3DS = currentApacFraudApproved * (1 - apac3DSRate);
+    const currentApacExempt3DS = currentApacCreditCard * (1 - apac3DSRate);
     const currentApacToAuth = currentApacPost3DSSuccess + currentApacExempt3DS;
     const currentApacBankApproved = currentApacToAuth * apacBankApproval;
     const currentApacManualReview = currentApacBankApproved * apacManualReviewRate;
@@ -262,10 +270,11 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
       : apacManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
 
     const futureApacFraudApproved = apacRevenue * futureApacFraudApproval;
-    const futureApacTo3DS = futureApacFraudApproved * futureApac3DSRate;
+    const futureApacCreditCard = futureApacFraudApproved * apacCreditCardPct;
+    const futureApacTo3DS = futureApacCreditCard * futureApac3DSRate;
     const futureApac3DSAbandoned = futureApacTo3DS * futureApacAbandonmentRate;
     const futureApacPost3DSSuccess = futureApacTo3DS - futureApac3DSAbandoned;
-    const futureApacExempt3DS = futureApacFraudApproved * (1 - futureApac3DSRate);
+    const futureApacExempt3DS = futureApacCreditCard * (1 - futureApac3DSRate);
     const futureApacToAuth = futureApacPost3DSSuccess + futureApacExempt3DS;
     const futureApacBankApproved = futureApacToAuth * futureApacBankApproval;
     const futureApacManualReview = futureApacBankApproved * futureApacManualReviewRate;
@@ -501,6 +510,18 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                     {showPaymentsInputs && (
                       <>
                         <div className="space-y-2">
+                          <Label htmlFor="amerCreditCardPct">Credit card transactions (%)</Label>
+                          <Input
+                            id="amerCreditCardPct"
+                            type="number"
+                            value={formData.amerCreditCardPct ?? ""}
+                            onChange={(e) => updateField("amerCreditCardPct", parseFloat(e.target.value) || 0)}
+                            placeholder="100"
+                          />
+                          <p className="text-xs text-muted-foreground">% of traffic that is credit card transactions</p>
+                        </div>
+
+                        <div className="space-y-2">
                           <Label htmlFor="amerBankDecline">Issuing Bank Decline Rate (%)</Label>
                           <Input
                             id="amerBankDecline"
@@ -601,6 +622,18 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
 
                     {showPaymentsInputs && (
                       <>
+                        <div className="space-y-2">
+                          <Label htmlFor="emeaCreditCardPct">Credit card transactions (%)</Label>
+                          <Input
+                            id="emeaCreditCardPct"
+                            type="number"
+                            value={formData.emeaCreditCardPct ?? ""}
+                            onChange={(e) => updateField("emeaCreditCardPct", parseFloat(e.target.value) || 0)}
+                            placeholder="100"
+                          />
+                          <p className="text-xs text-muted-foreground">% of traffic that is credit card transactions</p>
+                        </div>
+
                         <div className="space-y-2">
                           <Label htmlFor="emeaBankDecline">Issuing Bank Decline Rate (%)</Label>
                           <Input
@@ -734,6 +767,18 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
 
                     {showPaymentsInputs && (
                       <>
+                        <div className="space-y-2">
+                          <Label htmlFor="apacCreditCardPct">Credit card transactions (%)</Label>
+                          <Input
+                            id="apacCreditCardPct"
+                            type="number"
+                            value={formData.apacCreditCardPct ?? ""}
+                            onChange={(e) => updateField("apacCreditCardPct", parseFloat(e.target.value) || 0)}
+                            placeholder="100"
+                          />
+                          <p className="text-xs text-muted-foreground">% of traffic that is credit card transactions</p>
+                        </div>
+
                         <div className="space-y-2">
                           <Label htmlFor="apacBankDecline">Issuing Bank Decline Rate (%)</Label>
                           <Input
