@@ -829,9 +829,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                     
                     if (driverId === 'gmv-uplift') {
                       // Calculate AoV: sales attempts ($) / transaction attempts (#)
-                      // Default AoV of 105 to derive transaction count
-                      const amerTransactionCount = amerRevenue / 105;
-                      const avgOrderValue = 105;
+                      const amerTransactionCount = formData.amerGrossAttempts || 0;
+                      const avgOrderValue = amerTransactionCount > 0 ? amerRevenue / amerTransactionCount : 0;
                       
                       // Calculate transaction counts for breakdown
                       const currentAmerApprovedCount = amerTransactionCount * (formData.amerFraudCheckTiming === "pre-auth" ? (formData.amerPreAuthApprovalRate || 95) / 100 : 1);
