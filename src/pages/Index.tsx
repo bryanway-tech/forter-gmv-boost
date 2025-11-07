@@ -169,7 +169,7 @@ const Index = () => {
               className="p-8 cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all"
               onClick={() => setMode("manual")}
             >
-              <h2 className="text-2xl font-bold mb-3">Manual Input</h2>
+              <h2 className="text-2xl font-bold mb-3">Value Model</h2>
               <p className="text-muted-foreground mb-4">
                 Enter metrics directly through a structured form
               </p>
