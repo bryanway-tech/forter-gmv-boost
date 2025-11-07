@@ -828,30 +828,43 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                     const apacRevenue = formData.apacAnnualGMV || 0;
                     
                     if (driverId === 'gmv-uplift') {
+                      // Calculate AoV: sales attempts ($) / transaction attempts (#)
+                      // Default AoV of 105 to derive transaction count
+                      const amerTransactionCount = amerRevenue / 105;
+                      const avgOrderValue = 105;
+                      
+                      // Calculate transaction counts for breakdown
+                      const currentAmerApprovedCount = amerTransactionCount * (formData.amerFraudCheckTiming === "pre-auth" ? (formData.amerPreAuthApprovalRate || 95) / 100 : 1);
+                      const futureAmerApprovedCount = amerTransactionCount * (forterKPIs.fraudApprovalRate / 100);
+                      
                       setBreakdownData({
                         title: "GMV Uplift - Fraud Management & Payment Optimization",
                         columns: ["Current", "Impact", "Forter"],
                         calculations: [
                           { label: "1. Pre-Auth Fraud Decisioning", isHeader: true },
+                          { label: "Non-EEA eCommerce gross sales attempts (#)", currentValue: amerTransactionCount, impactValue: null, forterValue: amerTransactionCount },
                           { label: "Non-EEA eCommerce gross sales attempts ($)", currentValue: amerRevenue, impactValue: null, forterValue: amerRevenue },
-                          { label: "Transaction average order value ($)", currentValue: 105, impactValue: null, forterValue: 105 },
+                          { label: "Transaction average order value ($)", currentValue: avgOrderValue, impactValue: null, forterValue: avgOrderValue },
                           { label: "Pre-Auth fraud approval rate (%)", currentValue: formData.amerFraudCheckTiming === "pre-auth" ? (formData.amerPreAuthApprovalRate || 95) : 100, impactValue: `${forterKPIs.fraudApprovalRate - (formData.amerFraudCheckTiming === "pre-auth" ? (formData.amerPreAuthApprovalRate || 95) : 100)}%pp`, forterValue: forterKPIs.fraudApprovalRate },
-                          { label: "Pre-Auth fraud approved sales ($)", currentValue: metrics.currentAmerCompleted * 1.08, impactValue: (metrics.futureAmerCompleted - metrics.currentAmerCompleted) * 1.08, forterValue: metrics.futureAmerCompleted * 1.08 },
+                          { label: "Pre-Auth fraud approved sales (#)", currentValue: currentAmerApprovedCount, impactValue: futureAmerApprovedCount - currentAmerApprovedCount, forterValue: futureAmerApprovedCount },
+                          { label: "Pre-Auth fraud approved sales ($)", currentValue: currentAmerApprovedCount * avgOrderValue, impactValue: (futureAmerApprovedCount - currentAmerApprovedCount) * avgOrderValue, forterValue: futureAmerApprovedCount * avgOrderValue },
                           
                           { label: "2. AMER 3DS Flow", isHeader: true },
-                          { label: "Transactions going through 3DS (%)", currentValue: formData.amer3DSChallengeRate || 0, impactValue: `-${formData.amer3DSChallengeRate || 0}%`, forterValue: 0 },
+                          { label: "Credit card transactions (%)", currentValue: 100, impactValue: null, forterValue: 100 },
+                          { label: "Transactions going through 3DS (%)", currentValue: formData.amer3DSChallengeRate || 0, impactValue: `-${formData.amer3DSChallengeRate || 0}%pp`, forterValue: 0 },
                           { label: "Transaction 3DS failure and abandonment rate (%)", currentValue: formData.amer3DSAbandonmentRate || 10, impactValue: null, forterValue: formData.amer3DSAbandonmentRate || 10 },
                           { label: "3DS exempt transactions (%)", currentValue: 100 - (formData.amer3DSChallengeRate || 0), impactValue: `${formData.amer3DSChallengeRate || 0}%pp`, forterValue: 100 },
                           
                           { label: "3. Issuing Bank", isHeader: true },
-                          { label: "Total post-3DS success sent to authorization ($)", currentValue: metrics.currentAmerCompleted * 1.08, impactValue: (metrics.futureAmerCompleted - metrics.currentAmerCompleted) * 1.08, forterValue: metrics.futureAmerCompleted * 1.08 },
-                          { label: "Declined transactions rate by issuing bank (%)", currentValue: formData.amerIssuingBankDeclineRate || 7, impactValue: "0%", forterValue: formData.amerIssuingBankDeclineRate || 7 },
+                          { label: "Declined transactions rate by issuing bank (%)", currentValue: formData.amerIssuingBankDeclineRate || 7, impactValue: `0%pp`, forterValue: formData.amerIssuingBankDeclineRate || 7 },
                           
                           { label: "4. Post-Auth Fraud Decisioning", isHeader: true },
-                          { label: "Post Auth Fraud approval rate (%)", currentValue: formData.amerFraudCheckTiming === "post-auth" ? (formData.amerPostAuthApprovalRate || 98.5) : 100, impactValue: "0%", forterValue: formData.amerFraudCheckTiming === "post-auth" ? forterKPIs.fraudApprovalRate : 100 },
-                          { label: "Post-Auth fraud approved sales ($)", currentValue: metrics.currentAmerCompleted, impactValue: metrics.futureAmerCompleted - metrics.currentAmerCompleted, forterValue: metrics.futureAmerCompleted, isResult: true },
+                          { label: "Post-Auth fraud approval rate (%)", currentValue: formData.amerFraudCheckTiming === "post-auth" ? (formData.amerPostAuthApprovalRate || 98.5) : 100, impactValue: `${100 - (formData.amerFraudCheckTiming === "post-auth" ? (formData.amerPostAuthApprovalRate || 98.5) : 100)}%pp`, forterValue: 100 },
+                          { label: "Post-Auth fraud approved sales ($)", currentValue: metrics.currentAmerCompleted, impactValue: metrics.futureAmerCompleted - metrics.currentAmerCompleted, forterValue: metrics.futureAmerCompleted },
                           
-                          { label: "Total non-EEA sales completion (in-scope) ($)", currentValue: metrics.currentAmerCompleted, impactValue: metrics.futureAmerCompleted - metrics.currentAmerCompleted, forterValue: metrics.futureAmerCompleted, isResult: true, isBad: false },
+                          { label: "Total Sales Completion", isHeader: true },
+                          { label: "Total non-EEA sales completion ($)", currentValue: metrics.currentAmerCompleted, impactValue: metrics.futureAmerCompleted - metrics.currentAmerCompleted, forterValue: metrics.futureAmerCompleted, isResult: true },
+                          { label: "Completion rate (%)", currentValue: (metrics.currentAmerCompleted / amerRevenue) * 100, impactValue: `${((metrics.futureAmerCompleted - metrics.currentAmerCompleted) / amerRevenue * 100).toFixed(2)}%pp`, forterValue: (metrics.futureAmerCompleted / amerRevenue) * 100 },
                         ]
                       });
                       setBreakdownOpen(true);
