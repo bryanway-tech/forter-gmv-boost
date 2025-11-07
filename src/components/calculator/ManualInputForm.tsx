@@ -287,10 +287,17 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
     const apacGMVUplift = futureApacCompleted - currentApacCompleted;
     const totalGMVUplift = amerGMVUplift + emeaGMVUplift + apacGMVUplift;
 
-    // Chargeback calculations
-    const currentChargebacks = totalRevenue * ((formData.fraudCBRate ?? 0.8) / 100);
-    const reductionRate = forterKPIs.chargebackReduction / 100;
-    const futureChargebacks = currentChargebacks * (1 - reductionRate);
+    // Chargeback calculations - use completed sales totals
+    const currentTotalCompleted = currentAmerCompleted + currentEmeaCompleted + currentApacCompleted;
+    const futureTotalCompleted = futureAmerCompleted + futureEmeaCompleted + futureApacCompleted;
+    
+    const currentFraudCBRate = (formData.fraudCBRate ?? 0.8) / 100;
+    const futureFraudCBRate = forterKPIs.chargebackReductionIsAbsolute
+      ? forterKPIs.chargebackReduction / 100
+      : currentFraudCBRate * (1 - forterKPIs.chargebackReduction / 100);
+    
+    const currentChargebacks = currentTotalCompleted * currentFraudCBRate;
+    const futureChargebacks = futureTotalCompleted * futureFraudCBRate;
     const chargebackSavings = currentChargebacks - futureChargebacks;
 
     // Apply driver toggles
@@ -557,16 +564,31 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                     )}
 
                     {showFraudInputs && (
-                      <div className="space-y-2">
-                        <Label htmlFor="amerManualReview">Manual Review Rate (%)</Label>
-                        <Input
-                          id="amerManualReview"
-                          type="number"
-                          value={formData.amerManualReviewRate ?? ""}
-                          onChange={(e) => updateField("amerManualReviewRate", parseFloat(e.target.value) || 0)}
-                        />
-                        <p className="text-xs text-muted-foreground">% of transactions requiring manual review</p>
-                      </div>
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="amerManualReview">Manual Review Rate (%)</Label>
+                          <Input
+                            id="amerManualReview"
+                            type="number"
+                            value={formData.amerManualReviewRate ?? ""}
+                            onChange={(e) => updateField("amerManualReviewRate", parseFloat(e.target.value) || 0)}
+                          />
+                          <p className="text-xs text-muted-foreground">% of transactions requiring manual review</p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="amerFraudCBRate">Fraud Chargeback Rate (%)</Label>
+                          <Input
+                            id="amerFraudCBRate"
+                            type="number"
+                            step="0.01"
+                            value={formData.fraudCBRate ?? ""}
+                            onChange={(e) => updateField("fraudCBRate", parseFloat(e.target.value) || 0)}
+                            placeholder="0.80"
+                          />
+                          <p className="text-xs text-muted-foreground">Fraud chargeback rate as % of completed sales value</p>
+                        </div>
+                      </>
                     )}
                   </div>
                 </TabsContent>
@@ -897,7 +919,7 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                           { label: "Pre-Auth fraud approved sales ($)", currentValue: currentAmerApprovedCount * avgOrderValue, impactValue: (futureAmerApprovedCount - currentAmerApprovedCount) * avgOrderValue, forterValue: futureAmerApprovedCount * avgOrderValue },
                           
                           { label: "2. AMER 3DS Flow", isHeader: true },
-                          { label: "Credit card transactions (%)", currentValue: 100, impactValue: null, forterValue: 100 },
+                          { label: "Credit card transactions (%)", currentValue: formData.amerCreditCardPct || 100, impactValue: null, forterValue: formData.amerCreditCardPct || 100 },
                           { label: "Transactions going through 3DS (%)", currentValue: formData.amer3DSChallengeRate || 0, impactValue: `-${formData.amer3DSChallengeRate || 0}%pp`, forterValue: 0 },
                           { label: "Transaction 3DS failure and abandonment rate (%)", currentValue: formData.amer3DSAbandonmentRate || 10, impactValue: null, forterValue: formData.amer3DSAbandonmentRate || 10 },
                           { label: "3DS exempt transactions (%)", currentValue: 100 - (formData.amer3DSChallengeRate || 0), impactValue: `${formData.amer3DSChallengeRate || 0}%pp`, forterValue: 100 },
@@ -919,7 +941,9 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                       const currentTotalRevenue = metrics.currentAmerCompleted + metrics.currentEmeaCompleted + metrics.currentApacCompleted;
                       const futureTotalRevenue = metrics.futureAmerCompleted + metrics.futureEmeaCompleted + metrics.futureApacCompleted;
                       const currentFraudCBRate = (formData.fraudCBRate || 0.8) / 100;
-                      const futureFraudCBRate = currentFraudCBRate * (1 - forterKPIs.chargebackReduction / 100);
+                      const futureFraudCBRate = forterKPIs.chargebackReductionIsAbsolute
+                        ? forterKPIs.chargebackReduction / 100
+                        : currentFraudCBRate * (1 - forterKPIs.chargebackReduction / 100);
                       const avgOrderValue = formData.fraudCBAOV || 158;
                       
                       const currentGrossFraudCB = currentTotalRevenue * currentFraudCBRate;
@@ -927,8 +951,8 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                       const currentGrossFraudCBCount = currentGrossFraudCB / avgOrderValue;
                       const futureGrossFraudCBCount = futureGrossFraudCB / avgOrderValue;
                       
-                      const fraudDisputeRate = 0.95;
-                      const fraudWinRate = 0.25;
+                      const fraudDisputeRate = forterKPIs.disputeRate / 100;
+                      const fraudWinRate = forterKPIs.fraudDisputeWinRate / 100;
                       
                       const currentDisputed = 0;
                       const futureDisputed = futureGrossFraudCBCount * fraudDisputeRate;
@@ -937,24 +961,28 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                       const currentNetCB = currentGrossFraudCB;
                       const futureNetCB = futureGrossFraudCB - (futureWon * avgOrderValue);
                       
+                      const reductionPercentage = forterKPIs.chargebackReductionIsAbsolute
+                        ? `${((currentFraudCBRate - futureFraudCBRate) / currentFraudCBRate * 100).toFixed(0)}%`
+                        : `-${forterKPIs.chargebackReduction}%`;
+                      
                       setBreakdownData({
                         title: "Reduce fraud chargebacks",
                         columns: ["Current", "Impact", "Forter"],
                         calculations: [
-                          { label: "Completed value of transactions ($)", currentValue: currentTotalRevenue, impactValue: null, forterValue: futureTotalRevenue },
-                          { label: "Gross fraud chargeback rate on value amount (%)", currentValue: currentFraudCBRate * 100, impactValue: `-${forterKPIs.chargebackReduction}%`, forterValue: futureFraudCBRate * 100 },
+                          { label: "Completed value of transactions ($)", currentValue: currentTotalRevenue, impactValue: futureTotalRevenue - currentTotalRevenue, forterValue: futureTotalRevenue },
+                          { label: "Gross fraud chargeback rate on value amount (%)", currentValue: currentFraudCBRate * 100, impactValue: reductionPercentage, forterValue: futureFraudCBRate * 100 },
                           { label: "Average order value of fraud chargebacks ($)", currentValue: avgOrderValue, impactValue: null, forterValue: avgOrderValue },
                           { label: "Gross fraud chargebacks ($)", currentValue: currentGrossFraudCB, impactValue: futureGrossFraudCB - currentGrossFraudCB, forterValue: futureGrossFraudCB },
                           { label: "Gross fraud chargebacks (#)", currentValue: currentGrossFraudCBCount, impactValue: futureGrossFraudCBCount - currentGrossFraudCBCount, forterValue: futureGrossFraudCBCount },
-                          { label: "Fraud chargeback disputed (%)", currentValue: 0, impactValue: "0%", forterValue: 95 },
+                          { label: "Fraud chargeback disputed (%)", currentValue: 0, impactValue: "0%", forterValue: forterKPIs.disputeRate },
                           { label: "Fraud chargebacks disputed (#)", currentValue: currentDisputed, impactValue: futureDisputed, forterValue: futureDisputed },
                           { label: "Fraud chargebacks disputed ($)", currentValue: 0, impactValue: futureDisputed * avgOrderValue, forterValue: futureDisputed * avgOrderValue },
-                          { label: "Fraud chargeback win rate (%)", currentValue: 0, impactValue: "0%", forterValue: 25 },
+                          { label: "Fraud chargeback win rate (%)", currentValue: 0, impactValue: "0%", forterValue: forterKPIs.fraudDisputeWinRate },
                           { label: "Fraud chargebacks won (#)", currentValue: 0, impactValue: futureWon, forterValue: futureWon },
                           { label: "Fraud chargebacks won ($)", currentValue: 0, impactValue: futureWon * avgOrderValue, forterValue: futureWon * avgOrderValue },
                           { label: "Net fraud chargebacks (#)", currentValue: currentGrossFraudCBCount, impactValue: futureGrossFraudCBCount - futureWon - currentGrossFraudCBCount, forterValue: futureGrossFraudCBCount - futureWon, isResult: true },
                           { label: "Net fraud chargebacks ($)", currentValue: currentNetCB, impactValue: currentNetCB - futureNetCB, forterValue: futureNetCB, isResult: true },
-                          { label: "Overall fraud chargeback recovery rate (%)", currentValue: 0, impactValue: "24%", forterValue: 24 },
+                          { label: "Overall fraud chargeback recovery rate (%)", currentValue: 0, impactValue: `${(fraudWinRate * fraudDisputeRate * 100).toFixed(0)}%`, forterValue: (fraudWinRate * fraudDisputeRate * 100).toFixed(1) },
                         ]
                       });
                       setBreakdownOpen(true);

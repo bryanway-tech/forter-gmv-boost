@@ -21,6 +21,7 @@ export type ForterKPIs = {
   threeDSChallengeIsAbsolute?: boolean;
   threeDSAbandonmentIsAbsolute?: boolean;
   manualReviewIsAbsolute?: boolean;
+  chargebackReductionIsAbsolute?: boolean;
 };
 
 interface ForterKPIConfigProps {
@@ -52,6 +53,9 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
   const [manualReviewMode, setManualReviewMode] = useState<'reduction' | 'absolute'>(
     kpis.manualReviewIsAbsolute ? 'absolute' : 'reduction'
   );
+  const [chargebackReductionMode, setChargebackReductionMode] = useState<'reduction' | 'absolute'>(
+    kpis.chargebackReductionIsAbsolute ? 'absolute' : 'reduction'
+  );
 
   const updateKPI = (field: keyof ForterKPIs, value: number | boolean) => {
     onUpdate({ ...kpis, [field]: value });
@@ -73,6 +77,12 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
     const newMode = checked ? 'absolute' : 'reduction';
     setManualReviewMode(newMode);
     updateKPI('manualReviewIsAbsolute', checked);
+  };
+
+  const toggleChargebackReductionMode = (checked: boolean) => {
+    const newMode = checked ? 'absolute' : 'reduction';
+    setChargebackReductionMode(newMode);
+    updateKPI('chargebackReductionIsAbsolute', checked);
   };
 
   return (
@@ -117,7 +127,19 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="chargebackReduction">Chargeback Reduction (%)</Label>
+                  <div className="flex items-center justify-between gap-4">
+                    <Label htmlFor="chargebackReduction">
+                      {chargebackReductionMode === 'reduction' ? 'Fraud Chargeback Reduction (%)' : 'Post-Forter Fraud Chargeback Rate (%)'}
+                    </Label>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">Improvement %</span>
+                      <Switch
+                        checked={chargebackReductionMode === 'absolute'}
+                        onCheckedChange={toggleChargebackReductionMode}
+                      />
+                      <span className="text-muted-foreground">Absolute Rate</span>
+                    </div>
+                  </div>
                   <Input
                     id="chargebackReduction"
                     type="number"
@@ -126,7 +148,9 @@ export const ForterKPIConfig = ({ kpis, onUpdate }: ForterKPIConfigProps) => {
                     onChange={(e) => updateKPI("chargebackReduction", parseFloat(e.target.value))}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Expected reduction in fraud chargebacks
+                    {chargebackReductionMode === 'reduction'
+                      ? 'Expected reduction in fraud chargebacks'
+                      : 'Target fraud chargeback rate after Forter implementation'}
                   </p>
                 </div>
 
