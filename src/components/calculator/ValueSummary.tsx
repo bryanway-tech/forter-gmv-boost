@@ -149,7 +149,7 @@ export const ValueSummary = ({
               <p className="text-sm text-muted-foreground">(probable)</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Apply margin</span>
+              <span className="text-sm text-muted-foreground">Profitability contribution</span>
               <Switch
                 checked={marginEnabled}
                 onCheckedChange={onMarginToggle}

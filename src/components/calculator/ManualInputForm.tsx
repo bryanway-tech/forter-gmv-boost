@@ -288,17 +288,20 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
     const enabledGMVUplift = driverToggles['gmv-uplift'] ? totalGMVUplift : 0;
     const enabledChargebackSavings = driverToggles['chargeback-savings'] ? chargebackSavings : 0;
 
-    const totalValue = enabledGMVUplift + enabledChargebackSavings;
-    
-    // Calculate profit value with margin toggle
+    // Calculate average gross margin across regions
     const avgMargin = (
       (formData.amerGrossMarginPercent || 50) + 
       (formData.emeaGrossMarginPercent || 50) + 
       (formData.apacGrossMarginPercent || 50)
     ) / 3;
-    const profitValue = marginEnabled 
-      ? (totalValue * (avgMargin / 100)) / 12 
-      : totalValue / 12;
+    
+    // Apply margin only to GMV uplift if enabled, chargeback savings remain as is
+    const profitableGMVUplift = marginEnabled 
+      ? enabledGMVUplift * (avgMargin / 100)
+      : enabledGMVUplift;
+    
+    const totalValue = profitableGMVUplift + enabledChargebackSavings;
+    const profitValue = totalValue;
 
     return { 
       totalGMVUplift, 
