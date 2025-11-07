@@ -38,6 +38,11 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
     title: string;
     calculations: any[];
   }>({ title: "", calculations: [] });
+  const [driverToggles, setDriverToggles] = useState<{ [key: string]: boolean }>({
+    'gmv-uplift': true,
+    'chargeback-savings': true
+  });
+  const [marginEnabled, setMarginEnabled] = useState(true);
 
   const updateField = (field: keyof CalculatorData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -62,10 +67,29 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
 
   const handleChallengeChange = (challengeId: string, checked: boolean) => {
     setSelectedChallenges(prev => ({ ...prev, [challengeId]: checked }));
+    
+    // Auto-enable/disable solutions based on challenges
+    if (challengeId.startsWith('fraud-systems')) {
+      setSelectedSolutions(prev => ({ 
+        ...prev, 
+        'fraud-management': checked,
+        'payments-optimization': checked 
+      }));
+    } else if (challengeId.startsWith('payments')) {
+      setSelectedSolutions(prev => ({ ...prev, 'payments-optimization': checked }));
+    }
   };
 
   const handleSolutionChange = (solutionId: string, checked: boolean) => {
     setSelectedSolutions(prev => ({ ...prev, [solutionId]: checked }));
+  };
+
+  const handleDriverToggle = (driverId: string, enabled: boolean) => {
+    setDriverToggles(prev => ({ ...prev, [driverId]: enabled }));
+  };
+
+  const handleMarginToggle = (enabled: boolean) => {
+    setMarginEnabled(enabled);
   };
 
   const handleSubmit = () => {
@@ -259,11 +283,38 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
     const futureChargebacks = currentChargebacks * (1 - reductionRate);
     const chargebackSavings = currentChargebacks - futureChargebacks;
 
-    const totalValue = totalGMVUplift + chargebackSavings;
-    const profitValue = totalValue / 12; // Monthly cost of doing nothing
+    // Apply driver toggles
+    const enabledGMVUplift = driverToggles['gmv-uplift'] ? totalGMVUplift : 0;
+    const enabledChargebackSavings = driverToggles['chargeback-savings'] ? chargebackSavings : 0;
 
-    return { totalGMVUplift, chargebackSavings, totalValue, profitValue };
-  }, [formData]);
+    const totalValue = enabledGMVUplift + enabledChargebackSavings;
+    
+    // Calculate profit value with margin toggle
+    const avgMargin = (
+      (formData.amerGrossMarginPercent || 50) + 
+      (formData.emeaGrossMarginPercent || 50) + 
+      (formData.apacGrossMarginPercent || 50)
+    ) / 3;
+    const profitValue = marginEnabled 
+      ? (totalValue * (avgMargin / 100)) / 12 
+      : totalValue / 12;
+
+    return { 
+      totalGMVUplift, 
+      chargebackSavings, 
+      totalValue, 
+      profitValue,
+      // For breakdown calculations
+      currentAmerCompleted,
+      futureAmerCompleted,
+      currentEmeaCompleted,
+      futureEmeaCompleted,
+      currentApacCompleted,
+      futureApacCompleted,
+      currentChargebacks,
+      futureChargebacks
+    };
+  }, [formData, driverToggles, marginEnabled]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -275,7 +326,7 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="challenges">Challenges</TabsTrigger>
             <TabsTrigger value="inputs">Key Inputs</TabsTrigger>
-            <TabsTrigger value="forter">Benefit Scope</TabsTrigger>
+            <TabsTrigger value="forter">Forter KPI</TabsTrigger>
             <TabsTrigger value="summary">Value Summary</TabsTrigger>
           </TabsList>
 
@@ -753,25 +804,68 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                   businessGrowthDrivers={[
                     { 
                       id: 'gmv-uplift', 
-                      label: 'Conversions - Improved approval rates', 
+                      label: 'GMV Uplift', 
                       value: metrics.totalGMVUplift,
-                      enabled: true
+                      enabled: driverToggles['gmv-uplift']
                     }
                   ]}
                   riskAvoidanceDrivers={[
                     { 
                       id: 'chargeback-savings', 
-                      label: 'Fraud chargeback reduction', 
+                      label: 'Chargeback Savings', 
                       value: metrics.chargebackSavings,
-                      enabled: true
+                      enabled: driverToggles['chargeback-savings']
                     }
                   ]}
                   totalValue={metrics.totalValue}
                   profitValue={metrics.profitValue}
+                  marginEnabled={marginEnabled}
                   onDriverClick={(driverId) => {
-                    // TODO: Show detailed breakdown
-                    toast.info("Detailed breakdown coming soon");
+                    if (driverId === 'gmv-uplift') {
+                      setBreakdownData({
+                        title: "GMV Uplift Calculation",
+                        calculations: [
+                          { label: "Current State", isHeader: true },
+                          { label: "AMER Completed Sales", value: metrics.currentAmerCompleted, formula: "Revenue × Approval Rate × (1 - 3DS Abandonment) × (1 - Bank Decline) × (1 - Manual Abandonment)" },
+                          { label: "EMEA Completed Sales", value: metrics.currentEmeaCompleted },
+                          { label: "APAC Completed Sales", value: metrics.currentApacCompleted },
+                          { label: "", isHeader: true },
+                          { label: "With Forter", isHeader: true },
+                          { label: "AMER Completed Sales", value: metrics.futureAmerCompleted, formula: "Revenue × Improved Approval Rate × Reduced 3DS × Improved Bank Auth" },
+                          { label: "EMEA Completed Sales", value: metrics.futureEmeaCompleted },
+                          { label: "APAC Completed Sales", value: metrics.futureApacCompleted },
+                          { label: "", isHeader: true },
+                          { label: "Impact", isHeader: true },
+                          { label: "Total GMV Uplift", value: metrics.totalGMVUplift, isResult: true, impactValue: metrics.totalGMVUplift }
+                        ]
+                      });
+                      setBreakdownOpen(true);
+                    } else if (driverId === 'chargeback-savings') {
+                      setBreakdownData({
+                        title: "Chargeback Savings Calculation",
+                        calculations: [
+                          { label: "Current State", isHeader: true },
+                          { label: "Current Chargebacks", value: metrics.currentChargebacks, formula: "Total Revenue × Fraud CB Rate" },
+                          { label: "", isHeader: true },
+                          { label: "With Forter", isHeader: true },
+                          { label: "Future Chargebacks", value: metrics.futureChargebacks, formula: "Current Chargebacks × (1 - CB Reduction %)" },
+                          { label: "", isHeader: true },
+                          { label: "Impact", isHeader: true },
+                          { label: "Total Savings", value: metrics.chargebackSavings, isResult: true, impactValue: metrics.chargebackSavings }
+                        ]
+                      });
+                      setBreakdownOpen(true);
+                    }
                   }}
+                  onDriverToggle={handleDriverToggle}
+                  onMarginToggle={handleMarginToggle}
+                />
+                
+                <CalculationBreakdown
+                  open={breakdownOpen}
+                  onOpenChange={setBreakdownOpen}
+                  title={breakdownData.title}
+                  calculations={breakdownData.calculations}
                 />
                 
                 <div className="flex justify-center gap-4 mt-6">

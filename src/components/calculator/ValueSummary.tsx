@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
-import { TrendingUp, DollarSign, ChevronDown, ChevronRight, CheckCircle2 } from "lucide-react";
+import { TrendingUp, DollarSign, ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { CalculationBreakdown } from "./CalculationBreakdown";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
 
 interface ValueDriver {
   id: string;
@@ -17,6 +18,9 @@ interface ValueSummaryProps {
   totalValue: number;
   profitValue?: number;
   onDriverClick?: (driverId: string) => void;
+  onDriverToggle?: (driverId: string, enabled: boolean) => void;
+  onMarginToggle?: (enabled: boolean) => void;
+  marginEnabled?: boolean;
 }
 
 export const ValueSummary = ({ 
@@ -24,7 +28,10 @@ export const ValueSummary = ({
   riskAvoidanceDrivers, 
   totalValue, 
   profitValue,
-  onDriverClick 
+  onDriverClick,
+  onDriverToggle,
+  onMarginToggle,
+  marginEnabled = true
 }: ValueSummaryProps) => {
   const [businessGrowthOpen, setBusinessGrowthOpen] = useState(true);
   const [riskAvoidanceOpen, setRiskAvoidanceOpen] = useState(true);
@@ -62,22 +69,27 @@ export const ValueSummary = ({
                   <div
                     key={driver.id}
                     className={`p-4 border-b last:border-b-0 flex items-center justify-between ${
-                      driver.enabled 
-                        ? 'cursor-pointer hover:bg-muted/50 transition-colors' 
-                        : 'opacity-50'
+                      !driver.enabled && 'opacity-50'
                     }`}
-                    onClick={() => driver.enabled && onDriverClick?.(driver.id)}
                   >
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className={`w-5 h-5 ${driver.enabled ? 'text-green-600' : 'text-muted-foreground'}`} />
-                      <span className="text-sm">{driver.label}</span>
+                    <div className="flex items-center gap-3 flex-1">
+                      <Switch
+                        checked={driver.enabled}
+                        onCheckedChange={(checked) => onDriverToggle?.(driver.id, checked)}
+                      />
+                      <span 
+                        className="text-sm cursor-pointer hover:underline flex-1"
+                        onClick={() => driver.enabled && onDriverClick?.(driver.id)}
+                      >
+                        {driver.label}
+                      </span>
                     </div>
                     <span className="font-semibold">{formatCurrency(driver.value)}</span>
                   </div>
                 ))}
                 <div className="p-4 bg-muted/30 font-semibold flex items-center justify-between">
                   <span>Business growth annual potential</span>
-                  <span className="text-green-600">{formatCurrency(businessGrowthTotal)}</span>
+                  <span className="text-foreground">{formatCurrency(businessGrowthTotal)}</span>
                 </div>
               </div>
             </CollapsibleContent>
@@ -99,22 +111,27 @@ export const ValueSummary = ({
                   <div
                     key={driver.id}
                     className={`p-4 border-b last:border-b-0 flex items-center justify-between ${
-                      driver.enabled 
-                        ? 'cursor-pointer hover:bg-muted/50 transition-colors' 
-                        : 'opacity-50'
+                      !driver.enabled && 'opacity-50'
                     }`}
-                    onClick={() => driver.enabled && onDriverClick?.(driver.id)}
                   >
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className={`w-5 h-5 ${driver.enabled ? 'text-green-600' : 'text-muted-foreground'}`} />
-                      <span className="text-sm">{driver.label}</span>
+                    <div className="flex items-center gap-3 flex-1">
+                      <Switch
+                        checked={driver.enabled}
+                        onCheckedChange={(checked) => onDriverToggle?.(driver.id, checked)}
+                      />
+                      <span 
+                        className="text-sm cursor-pointer hover:underline flex-1"
+                        onClick={() => driver.enabled && onDriverClick?.(driver.id)}
+                      >
+                        {driver.label}
+                      </span>
                     </div>
                     <span className="font-semibold">{formatCurrency(driver.value)}</span>
                   </div>
                 ))}
                 <div className="p-4 bg-muted/30 font-semibold flex items-center justify-between">
                   <span>Risk avoidance annual potential</span>
-                  <span className="text-blue-600">{formatCurrency(riskAvoidanceTotal)}</span>
+                  <span className="text-foreground">{formatCurrency(riskAvoidanceTotal)}</span>
                 </div>
               </div>
             </CollapsibleContent>
@@ -141,9 +158,16 @@ export const ValueSummary = ({
           <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800">
             <div className="flex items-start gap-3 mb-4">
               <DollarSign className="w-8 h-8 text-orange-600 dark:text-orange-400 flex-shrink-0" />
-              <div>
+              <div className="flex-1">
                 <p className="text-base font-semibold text-foreground mb-1">Cost of do nothing per month</p>
                 <p className="text-sm text-muted-foreground">(probable)</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Apply margin</span>
+                <Switch
+                  checked={marginEnabled}
+                  onCheckedChange={onMarginToggle}
+                />
               </div>
             </div>
             <p className="text-5xl font-bold text-orange-600 dark:text-orange-400">
@@ -157,11 +181,11 @@ export const ValueSummary = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2">
               <span className="text-sm text-muted-foreground">Business Growth</span>
-              <span className="text-lg font-semibold text-green-600 dark:text-green-400">{formatCurrency(businessGrowthTotal)}</span>
+              <span className="text-lg font-semibold text-foreground">{formatCurrency(businessGrowthTotal)}</span>
             </div>
             <div className="flex items-center justify-between py-2">
               <span className="text-sm text-muted-foreground">Risk Avoidance</span>
-              <span className="text-lg font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(riskAvoidanceTotal)}</span>
+              <span className="text-lg font-semibold text-foreground">{formatCurrency(riskAvoidanceTotal)}</span>
             </div>
           </div>
         </Card>
