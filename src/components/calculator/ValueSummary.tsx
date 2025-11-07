@@ -1,23 +1,34 @@
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { TrendingUp, DollarSign } from "lucide-react";
+import { TrendingUp, DollarSign, ChevronDown, ChevronRight, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { CalculationBreakdown } from "./CalculationBreakdown";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface ValueDriver {
   id: string;
   label: string;
   value: number;
-  onClick: () => void;
+  enabled: boolean;
 }
 
 interface ValueSummaryProps {
-  valueDrivers: ValueDriver[];
+  businessGrowthDrivers: ValueDriver[];
+  riskAvoidanceDrivers: ValueDriver[];
   totalValue: number;
   profitValue?: number;
+  onDriverClick?: (driverId: string) => void;
 }
 
-export const ValueSummary = ({ valueDrivers, totalValue, profitValue }: ValueSummaryProps) => {
+export const ValueSummary = ({ 
+  businessGrowthDrivers, 
+  riskAvoidanceDrivers, 
+  totalValue, 
+  profitValue,
+  onDriverClick 
+}: ValueSummaryProps) => {
+  const [businessGrowthOpen, setBusinessGrowthOpen] = useState(true);
+  const [riskAvoidanceOpen, setRiskAvoidanceOpen] = useState(true);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -27,71 +38,130 @@ export const ValueSummary = ({ valueDrivers, totalValue, profitValue }: ValueSum
     }).format(value);
   };
 
+  const businessGrowthTotal = businessGrowthDrivers.reduce((sum, d) => sum + (d.enabled ? d.value : 0), 0);
+  const riskAvoidanceTotal = riskAvoidanceDrivers.reduce((sum, d) => sum + (d.enabled ? d.value : 0), 0);
+
   return (
     <div className="grid md:grid-cols-2 gap-6">
       {/* Left side - Value Drivers */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold mb-4">Value Drivers</h3>
-        <div className="space-y-3">
-          {valueDrivers.map((driver) => (
-            <Card 
-              key={driver.id}
-              className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={driver.onClick}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{driver.label}</span>
-                <span className="text-lg font-bold text-primary">
-                  {formatCurrency(driver.value)}
-                </span>
+        <h3 className="text-xl font-semibold mb-4">Let's explore your personalized benefits</h3>
+        
+        {/* Business Growth Section */}
+        <Collapsible open={businessGrowthOpen} onOpenChange={setBusinessGrowthOpen}>
+          <Card className="overflow-hidden">
+            <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+              <div className="flex items-center gap-2">
+                {businessGrowthOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                <span className="font-semibold">Business growths</span>
               </div>
-            </Card>
-          ))}
-        </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="border-t">
+                {businessGrowthDrivers.map((driver) => (
+                  <div
+                    key={driver.id}
+                    className={`p-4 border-b last:border-b-0 flex items-center justify-between ${
+                      driver.enabled 
+                        ? 'cursor-pointer hover:bg-muted/50 transition-colors' 
+                        : 'opacity-50'
+                    }`}
+                    onClick={() => driver.enabled && onDriverClick?.(driver.id)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className={`w-5 h-5 ${driver.enabled ? 'text-green-600' : 'text-muted-foreground'}`} />
+                      <span className="text-sm">{driver.label}</span>
+                    </div>
+                    <span className="font-semibold">{formatCurrency(driver.value)}</span>
+                  </div>
+                ))}
+                <div className="p-4 bg-muted/30 font-semibold flex items-center justify-between">
+                  <span>Business growth annual potential</span>
+                  <span className="text-green-600">{formatCurrency(businessGrowthTotal)}</span>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+
+        {/* Risk Avoidance Section */}
+        <Collapsible open={riskAvoidanceOpen} onOpenChange={setRiskAvoidanceOpen}>
+          <Card className="overflow-hidden">
+            <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+              <div className="flex items-center gap-2">
+                {riskAvoidanceOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                <span className="font-semibold">Risk Avoidance</span>
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="border-t">
+                {riskAvoidanceDrivers.map((driver) => (
+                  <div
+                    key={driver.id}
+                    className={`p-4 border-b last:border-b-0 flex items-center justify-between ${
+                      driver.enabled 
+                        ? 'cursor-pointer hover:bg-muted/50 transition-colors' 
+                        : 'opacity-50'
+                    }`}
+                    onClick={() => driver.enabled && onDriverClick?.(driver.id)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className={`w-5 h-5 ${driver.enabled ? 'text-green-600' : 'text-muted-foreground'}`} />
+                      <span className="text-sm">{driver.label}</span>
+                    </div>
+                    <span className="font-semibold">{formatCurrency(driver.value)}</span>
+                  </div>
+                ))}
+                <div className="p-4 bg-muted/30 font-semibold flex items-center justify-between">
+                  <span>Risk avoidance annual potential</span>
+                  <span className="text-blue-600">{formatCurrency(riskAvoidanceTotal)}</span>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       </div>
 
       {/* Right side - Summary */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold mb-4">Summary</h3>
-        
-        <Card className="p-6 bg-gradient-to-br from-primary/10 to-secondary/10">
-          <div className="flex items-center gap-3 mb-4">
-            <TrendingUp className="w-8 h-8 text-primary" />
+        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+          <div className="flex items-start gap-3 mb-4">
+            <TrendingUp className="w-8 h-8 text-green-600 dark:text-green-400 flex-shrink-0" />
             <div>
-              <p className="text-sm text-muted-foreground">Annual Benefit Potential</p>
-              <p className="text-xs text-muted-foreground">(probable)</p>
+              <p className="text-base font-semibold text-foreground mb-1">annual benefit potential</p>
+              <p className="text-sm text-muted-foreground">(probable)</p>
             </div>
           </div>
-          <p className="text-4xl font-bold text-primary">
+          <p className="text-5xl font-bold text-green-600 dark:text-green-400">
             {formatCurrency(totalValue)}
           </p>
         </Card>
 
         {profitValue !== undefined && profitValue > 0 && (
-          <Card className="p-6 bg-gradient-to-br from-secondary/10 to-primary/10">
-            <div className="flex items-center gap-3 mb-4">
-              <DollarSign className="w-8 h-8 text-secondary" />
+          <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800">
+            <div className="flex items-start gap-3 mb-4">
+              <DollarSign className="w-8 h-8 text-orange-600 dark:text-orange-400 flex-shrink-0" />
               <div>
-                <p className="text-sm text-muted-foreground">Cost of do nothing per month</p>
-                <p className="text-xs text-muted-foreground">(probable)</p>
+                <p className="text-base font-semibold text-foreground mb-1">Cost of do nothing per month</p>
+                <p className="text-sm text-muted-foreground">(probable)</p>
               </div>
             </div>
-            <p className="text-4xl font-bold text-secondary">
+            <p className="text-5xl font-bold text-orange-600 dark:text-orange-400">
               {formatCurrency(profitValue)}
             </p>
           </Card>
         )}
 
-        <Card className="p-4 bg-muted/50">
-          <h4 className="font-semibold mb-3">Value category distribution</h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Business Growth</span>
-              <span className="font-semibold">{formatCurrency(valueDrivers[0]?.value || 0)}</span>
+        <Card className="p-6 bg-muted/50">
+          <h4 className="text-lg font-semibold mb-4">Value category distribution</h4>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-muted-foreground">Business Growth</span>
+              <span className="text-lg font-semibold text-green-600 dark:text-green-400">{formatCurrency(businessGrowthTotal)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Risk Avoidance</span>
-              <span className="font-semibold">{formatCurrency(valueDrivers[1]?.value || 0)}</span>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-muted-foreground">Risk Avoidance</span>
+              <span className="text-lg font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(riskAvoidanceTotal)}</span>
             </div>
           </div>
         </Card>

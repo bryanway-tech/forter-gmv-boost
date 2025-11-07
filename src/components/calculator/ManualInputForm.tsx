@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { ChallengeSelection } from "@/components/calculator/ChallengeSelection";
 import { ValueSummary } from "@/components/calculator/ValueSummary";
 import { toast } from "sonner";
 import { ResultsDashboard } from "./ResultsDashboard";
+import { CalculationBreakdown } from "./CalculationBreakdown";
 
 interface ManualInputFormProps {
   onComplete: (data: CalculatorData) => void;
@@ -32,6 +33,11 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
   const [selectedChallenges, setSelectedChallenges] = useState<{ [key: string]: boolean }>({});
   const [selectedSolutions, setSelectedSolutions] = useState<{ [key: string]: boolean }>({});
   const [showResults, setShowResults] = useState(false);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
+  const [breakdownData, setBreakdownData] = useState<{
+    title: string;
+    calculations: any[];
+  }>({ title: "", calculations: [] });
 
   const updateField = (field: keyof CalculatorData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -90,6 +96,174 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
   // Determine which data inputs to show based on selected challenges
   const showFraudInputs = Object.keys(selectedChallenges).some(k => k.startsWith('fraud-systems') && selectedChallenges[k]);
   const showPaymentsInputs = Object.keys(selectedChallenges).some(k => k.startsWith('payments') && selectedChallenges[k]);
+
+  // Calculate metrics for Value Summary
+  const metrics = useMemo(() => {
+    const forterKPIs = formData.forterKPIs || defaultForterKPIs;
+    
+    const amerRevenue = formData.amerAnnualGMV || 0;
+    const emeaRevenue = formData.emeaAnnualGMV || 0;
+    const apacRevenue = formData.apacAnnualGMV || 0;
+    const totalRevenue = amerRevenue + emeaRevenue + apacRevenue;
+
+    if (totalRevenue === 0) {
+      return { totalGMVUplift: 0, chargebackSavings: 0, totalValue: 0, profitValue: 0 };
+    }
+
+    // Helper to get abandonment rate
+    const getAbandonmentRate = (rate: number | undefined) => (rate !== undefined && rate !== null ? rate : 0) / 100;
+
+    // AMER calculations
+    const amerBankDeclineRate = (formData.amerIssuingBankDeclineRate || 7) / 100;
+    const amerBankApproval = 1 - amerBankDeclineRate;
+    const amerFraudApproval = formData.amerFraudCheckTiming === "pre-auth"
+      ? (formData.amerPreAuthApprovalRate || 95) / 100
+      : (formData.amerPostAuthApprovalRate || 98.5) / 100;
+    const amer3DSRate = (formData.amer3DSChallengeRate || 0) / 100;
+    const amerAbandonmentRate = getAbandonmentRate(formData.amer3DSAbandonmentRate);
+    const amerManualReviewRate = (formData.amerManualReviewRate || 0) / 100;
+
+    const currentAmerFraudApproved = amerRevenue * amerFraudApproval;
+    const currentAmerTo3DS = currentAmerFraudApproved * amer3DSRate;
+    const currentAmer3DSAbandoned = currentAmerTo3DS * amerAbandonmentRate;
+    const currentAmerPost3DSSuccess = currentAmerTo3DS - currentAmer3DSAbandoned;
+    const currentAmerExempt3DS = currentAmerFraudApproved * (1 - amer3DSRate);
+    const currentAmerToAuth = currentAmerPost3DSSuccess + currentAmerExempt3DS;
+    const currentAmerBankApproved = currentAmerToAuth * amerBankApproval;
+    const currentAmerManualReview = currentAmerBankApproved * amerManualReviewRate;
+    const currentAmerManualAbandoned = currentAmerManualReview * 0.03;
+    const currentAmerCompleted = currentAmerBankApproved - currentAmerManualAbandoned;
+
+    const bankDeclineImprovement = forterKPIs.bankDeclineImprovement / 100;
+    const futureAmerBankDeclineRate = amerBankDeclineRate * (1 - bankDeclineImprovement);
+    const futureAmerBankApproval = Math.min(0.99, 1 - futureAmerBankDeclineRate);
+    const futureAmerFraudApproval = forterKPIs.fraudApprovalRate / 100;
+    const futureAmer3DSRate = forterKPIs.threeDSChallengeIsAbsolute
+      ? forterKPIs.threeDSChallengeReduction / 100
+      : amer3DSRate * (1 - forterKPIs.threeDSChallengeReduction / 100);
+    const futureAmerAbandonmentRate = forterKPIs.threeDSAbandonmentIsAbsolute
+      ? forterKPIs.threeDSAbandonmentImprovement / 100
+      : Math.max(0, amerAbandonmentRate * (1 - forterKPIs.threeDSAbandonmentImprovement / 100));
+    const futureAmerManualReviewRate = forterKPIs.manualReviewIsAbsolute
+      ? forterKPIs.manualReviewReduction / 100
+      : amerManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
+
+    const futureAmerFraudApproved = amerRevenue * futureAmerFraudApproval;
+    const futureAmerTo3DS = futureAmerFraudApproved * futureAmer3DSRate;
+    const futureAmer3DSAbandoned = futureAmerTo3DS * futureAmerAbandonmentRate;
+    const futureAmerPost3DSSuccess = futureAmerTo3DS - futureAmer3DSAbandoned;
+    const futureAmerExempt3DS = futureAmerFraudApproved * (1 - futureAmer3DSRate);
+    const futureAmerToAuth = futureAmerPost3DSSuccess + futureAmerExempt3DS;
+    const futureAmerBankApproved = futureAmerToAuth * futureAmerBankApproval;
+    const futureAmerManualReview = futureAmerBankApproved * futureAmerManualReviewRate;
+    const futureAmerManualAbandoned = futureAmerManualReview * 0.02;
+    const futureAmerCompleted = futureAmerBankApproved - futureAmerManualAbandoned;
+
+    // EMEA calculations
+    const emeaBankDeclineRate = (formData.emeaIssuingBankDeclineRate ?? 5) / 100;
+    const emeaBankApproval = 1 - emeaBankDeclineRate;
+    const emeaFraudApproval = (formData.emeaPreAuthApprovalRate ?? 95) / 100;
+    const emea3DSRate = (formData.emea3DSChallengeRate ?? 0) / 100;
+    const emeaAbandonmentRate = getAbandonmentRate(formData.emea3DSAbandonmentRate);
+    const emeaManualReviewRate = (formData.emeaManualReviewRate ?? 0) / 100;
+
+    const currentEmeaFraudApproved = emeaRevenue * emeaFraudApproval;
+    const currentEmeaTo3DS = currentEmeaFraudApproved * emea3DSRate;
+    const currentEmea3DSAbandoned = currentEmeaTo3DS * emeaAbandonmentRate;
+    const currentEmeaPost3DSSuccess = currentEmeaTo3DS - currentEmea3DSAbandoned;
+    const currentEmeaExempt3DS = currentEmeaFraudApproved * (1 - emea3DSRate);
+    const currentEmeaToAuth = currentEmeaPost3DSSuccess + currentEmeaExempt3DS;
+    const currentEmeaBankApproved = currentEmeaToAuth * emeaBankApproval;
+    const currentEmeaManualReview = currentEmeaBankApproved * emeaManualReviewRate;
+    const currentEmeaManualAbandoned = currentEmeaManualReview * 0.03;
+    const currentEmeaCompleted = currentEmeaBankApproved - currentEmeaManualAbandoned;
+
+    const futureEmeaBankDeclineRate = emeaBankDeclineRate * (1 - bankDeclineImprovement);
+    const futureEmeaBankApproval = Math.min(0.99, 1 - futureEmeaBankDeclineRate);
+    const futureEmeaFraudApproval = forterKPIs.fraudApprovalRate / 100;
+    const futureEmea3DSRate = forterKPIs.threeDSChallengeIsAbsolute
+      ? forterKPIs.threeDSChallengeReduction / 100
+      : emea3DSRate * (1 - forterKPIs.threeDSChallengeReduction / 100);
+    const futureEmeaAbandonmentRate = forterKPIs.threeDSAbandonmentIsAbsolute
+      ? forterKPIs.threeDSAbandonmentImprovement / 100
+      : Math.max(0, emeaAbandonmentRate * (1 - forterKPIs.threeDSAbandonmentImprovement / 100));
+    const futureEmeaManualReviewRate = forterKPIs.manualReviewIsAbsolute
+      ? forterKPIs.manualReviewReduction / 100
+      : emeaManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
+
+    const futureEmeaFraudApproved = emeaRevenue * futureEmeaFraudApproval;
+    const futureEmeaTo3DS = futureEmeaFraudApproved * futureEmea3DSRate;
+    const futureEmea3DSAbandoned = futureEmeaTo3DS * futureEmeaAbandonmentRate;
+    const futureEmeaPost3DSSuccess = futureEmeaTo3DS - futureEmea3DSAbandoned;
+    const futureEmeaExempt3DS = futureEmeaFraudApproved * (1 - futureEmea3DSRate);
+    const futureEmeaToAuth = futureEmeaPost3DSSuccess + futureEmeaExempt3DS;
+    const futureEmeaBankApproved = futureEmeaToAuth * futureEmeaBankApproval;
+    const futureEmeaManualReview = futureEmeaBankApproved * futureEmeaManualReviewRate;
+    const futureEmeaManualAbandoned = futureEmeaManualReview * 0.02;
+    const futureEmeaCompleted = futureEmeaBankApproved - futureEmeaManualAbandoned;
+
+    // APAC calculations
+    const apacBankDeclineRate = (formData.apacIssuingBankDeclineRate ?? 7) / 100;
+    const apacBankApproval = 1 - apacBankDeclineRate;
+    const apacFraudApproval = formData.apacFraudCheckTiming === "pre-auth"
+      ? (formData.apacPreAuthApprovalRate ?? 95) / 100
+      : (formData.apacPostAuthApprovalRate ?? 98.5) / 100;
+    const apac3DSRate = (formData.apac3DSChallengeRate ?? 0) / 100;
+    const apacAbandonmentRate = getAbandonmentRate(formData.apac3DSAbandonmentRate);
+    const apacManualReviewRate = (formData.apacManualReviewRate ?? 0) / 100;
+
+    const currentApacFraudApproved = apacRevenue * apacFraudApproval;
+    const currentApacTo3DS = currentApacFraudApproved * apac3DSRate;
+    const currentApac3DSAbandoned = currentApacTo3DS * apacAbandonmentRate;
+    const currentApacPost3DSSuccess = currentApacTo3DS - currentApac3DSAbandoned;
+    const currentApacExempt3DS = currentApacFraudApproved * (1 - apac3DSRate);
+    const currentApacToAuth = currentApacPost3DSSuccess + currentApacExempt3DS;
+    const currentApacBankApproved = currentApacToAuth * apacBankApproval;
+    const currentApacManualReview = currentApacBankApproved * apacManualReviewRate;
+    const currentApacManualAbandoned = currentApacManualReview * 0.03;
+    const currentApacCompleted = currentApacBankApproved - currentApacManualAbandoned;
+
+    const futureApacBankDeclineRate = apacBankDeclineRate * (1 - bankDeclineImprovement);
+    const futureApacBankApproval = Math.min(0.99, 1 - futureApacBankDeclineRate);
+    const futureApacFraudApproval = forterKPIs.fraudApprovalRate / 100;
+    const futureApac3DSRate = forterKPIs.threeDSChallengeIsAbsolute
+      ? forterKPIs.threeDSChallengeReduction / 100
+      : apac3DSRate * (1 - forterKPIs.threeDSChallengeReduction / 100);
+    const futureApacAbandonmentRate = forterKPIs.threeDSAbandonmentIsAbsolute
+      ? forterKPIs.threeDSAbandonmentImprovement / 100
+      : Math.max(0, apacAbandonmentRate * (1 - forterKPIs.threeDSAbandonmentImprovement / 100));
+    const futureApacManualReviewRate = forterKPIs.manualReviewIsAbsolute
+      ? forterKPIs.manualReviewReduction / 100
+      : apacManualReviewRate * (1 - forterKPIs.manualReviewReduction / 100);
+
+    const futureApacFraudApproved = apacRevenue * futureApacFraudApproval;
+    const futureApacTo3DS = futureApacFraudApproved * futureApac3DSRate;
+    const futureApac3DSAbandoned = futureApacTo3DS * futureApacAbandonmentRate;
+    const futureApacPost3DSSuccess = futureApacTo3DS - futureApac3DSAbandoned;
+    const futureApacExempt3DS = futureApacFraudApproved * (1 - futureApac3DSRate);
+    const futureApacToAuth = futureApacPost3DSSuccess + futureApacExempt3DS;
+    const futureApacBankApproved = futureApacToAuth * futureApacBankApproval;
+    const futureApacManualReview = futureApacBankApproved * futureApacManualReviewRate;
+    const futureApacManualAbandoned = futureApacManualReview * 0.02;
+    const futureApacCompleted = futureApacBankApproved - futureApacManualAbandoned;
+
+    // Calculate GMV uplift
+    const amerGMVUplift = futureAmerCompleted - currentAmerCompleted;
+    const emeaGMVUplift = futureEmeaCompleted - currentEmeaCompleted;
+    const apacGMVUplift = futureApacCompleted - currentApacCompleted;
+    const totalGMVUplift = amerGMVUplift + emeaGMVUplift + apacGMVUplift;
+
+    // Chargeback calculations
+    const currentChargebacks = totalRevenue * ((formData.fraudCBRate ?? 0.8) / 100);
+    const reductionRate = forterKPIs.chargebackReduction / 100;
+    const futureChargebacks = currentChargebacks * (1 - reductionRate);
+    const chargebackSavings = currentChargebacks - futureChargebacks;
+
+    const totalValue = totalGMVUplift + chargebackSavings;
+    const profitValue = totalValue / 12; // Monthly cost of doing nothing
+
+    return { totalGMVUplift, chargebackSavings, totalValue, profitValue };
+  }, [formData]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -568,12 +742,45 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
 
           {/* Value Summary Tab */}
           <TabsContent value="summary" className="space-y-4 mt-6">
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">Complete the Key Inputs and Benefit Scope tabs, then calculate your value assessment.</p>
-              <Button onClick={handleSubmit} size="lg">
-                Calculate Value Assessment
-              </Button>
-            </div>
+            {metrics.totalValue === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p className="mb-2">Please enter data in the Key Inputs tab to see your value assessment.</p>
+                <p className="text-sm">As you fill in the inputs, the calculations will update automatically here.</p>
+              </div>
+            ) : (
+              <>
+                <ValueSummary
+                  businessGrowthDrivers={[
+                    { 
+                      id: 'gmv-uplift', 
+                      label: 'Conversions - Improved approval rates', 
+                      value: metrics.totalGMVUplift,
+                      enabled: true
+                    }
+                  ]}
+                  riskAvoidanceDrivers={[
+                    { 
+                      id: 'chargeback-savings', 
+                      label: 'Fraud chargeback reduction', 
+                      value: metrics.chargebackSavings,
+                      enabled: true
+                    }
+                  ]}
+                  totalValue={metrics.totalValue}
+                  profitValue={metrics.profitValue}
+                  onDriverClick={(driverId) => {
+                    // TODO: Show detailed breakdown
+                    toast.info("Detailed breakdown coming soon");
+                  }}
+                />
+                
+                <div className="flex justify-center gap-4 mt-6">
+                  <Button onClick={handleSubmit} size="lg">
+                    View Full Results Dashboard
+                  </Button>
+                </div>
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </Card>
