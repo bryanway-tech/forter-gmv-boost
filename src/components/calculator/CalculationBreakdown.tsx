@@ -30,10 +30,27 @@ export const CalculationBreakdown = ({
 }: CalculationBreakdownProps) => {
   const isMultiColumn = columns && columns.length > 0;
 
-  const formatValue = (value: string | number | undefined) => {
+  const formatValue = (value: string | number | undefined, label?: string) => {
     if (value === undefined || value === null) return "";
     if (typeof value === "number") {
-      if (value > 1000) {
+      // Check label to determine formatting
+      const isDollarValue = label?.includes("($)");
+      const isPercentValue = label?.includes("(%)");
+      const isCountValue = label?.includes("(#)");
+      
+      if (isPercentValue) {
+        return `${value.toFixed(2)}%`;
+      }
+      
+      if (isCountValue) {
+        // Format as plain number with commas, no decimals
+        return new Intl.NumberFormat("en-US", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(value);
+      }
+      
+      if (isDollarValue || value > 1000) {
         return new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
@@ -41,12 +58,13 @@ export const CalculationBreakdown = ({
           maximumFractionDigits: 0,
         }).format(value);
       }
+      
       return value.toFixed(2);
     }
     return value;
   };
 
-  const formatImpact = (impact: string | number | undefined) => {
+  const formatImpact = (impact: string | number | undefined, label?: string) => {
     if (impact === undefined || impact === null) return "";
     const str = String(impact);
     
@@ -55,11 +73,39 @@ export const CalculationBreakdown = ({
       return str.replace("+", ""); // Remove + if present
     }
     
-    // If it already has a sign, return as is
-    if (str.startsWith("+") || str.startsWith("-")) return str;
+    // If it already has a sign or percentage, return as is
+    if (str.startsWith("+") || str.startsWith("-") || str.includes("%pp") || str.includes("%")) {
+      return str;
+    }
     
-    // Add + for positive numbers
-    if (typeof impact === "number" && impact > 0) return `+${formatValue(impact)}`;
+    // Format numeric impacts based on label type
+    if (typeof impact === "number") {
+      const isDollarValue = label?.includes("($)");
+      const isCountValue = label?.includes("(#)");
+      
+      if (isCountValue) {
+        // Format as plain number with commas, no decimals
+        const formatted = new Intl.NumberFormat("en-US", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(Math.abs(impact));
+        return impact > 0 ? `+${formatted}` : impact < 0 ? `-${formatted}` : formatted;
+      }
+      
+      if (isDollarValue) {
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(Math.abs(impact));
+        return impact > 0 ? `+${formatted}` : impact < 0 ? `-${formatted}` : formatted;
+      }
+      
+      return impact > 0 ? `+${formatValue(impact, label)}` : formatValue(impact, label);
+    }
+    
+    // Add + for positive string numbers that don't have it
     if (typeof impact === "string" && !str.startsWith("-")) return `+${str}`;
     
     return str;
@@ -114,7 +160,7 @@ export const CalculationBreakdown = ({
                         )}
                       </div>
                       <div className="text-right text-foreground">
-                        {formatValue(calc.currentValue)}
+                        {formatValue(calc.currentValue, calc.label)}
                       </div>
                       <div className={`text-right font-medium ${
                         (() => {
@@ -135,10 +181,10 @@ export const CalculationBreakdown = ({
                             : "text-green-600 dark:text-green-400";
                         })()
                       }`}>
-                        {formatImpact(calc.impactValue)}
+                        {formatImpact(calc.impactValue, calc.label)}
                       </div>
                       <div className="text-right text-foreground">
-                        {formatValue(calc.forterValue)}
+                        {formatValue(calc.forterValue, calc.label)}
                       </div>
                     </div>
                     {!calc.isResult && !calc.isHeader && !calc.isSubheader && index < calculations.length - 1 && !calculations[index + 1]?.isHeader && !calculations[index + 1]?.isSubheader && (
@@ -185,7 +231,7 @@ export const CalculationBreakdown = ({
                         )}
                       </div>
                       <div className={`text-right whitespace-nowrap ${calc.isResult ? "text-primary" : ""}`}>
-                        {formatValue(calc.value)}
+                        {formatValue(calc.value, calc.label)}
                       </div>
                     </div>
                     {!calc.isResult && !calc.isHeader && !calc.isSubheader && index < calculations.length - 1 && !calculations[index + 1]?.isHeader && !calculations[index + 1]?.isSubheader && (
