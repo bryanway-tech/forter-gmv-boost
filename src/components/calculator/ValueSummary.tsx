@@ -89,7 +89,7 @@ export const ValueSummary = ({
                 ))}
                 <div className="p-4 bg-muted/30 font-semibold flex items-center justify-between">
                   <span>Business growth annual potential</span>
-                  <span className="text-foreground">{formatCurrency(businessGrowthTotal)}</span>
+                  <span className="text-foreground font-semibold">{formatCurrency(businessGrowthTotal)}</span>
                 </div>
               </div>
             </CollapsibleContent>
@@ -131,7 +131,7 @@ export const ValueSummary = ({
                 ))}
                 <div className="p-4 bg-muted/30 font-semibold flex items-center justify-between">
                   <span>Risk avoidance annual potential</span>
-                  <span className="text-foreground">{formatCurrency(riskAvoidanceTotal)}</span>
+                  <span className="text-foreground font-semibold">{formatCurrency(riskAvoidanceTotal)}</span>
                 </div>
               </div>
             </CollapsibleContent>
@@ -144,50 +144,21 @@ export const ValueSummary = ({
         <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
           <div className="flex items-start gap-3 mb-4">
             <TrendingUp className="w-8 h-8 text-green-600 dark:text-green-400 flex-shrink-0" />
-            <div>
+            <div className="flex-1">
               <p className="text-base font-semibold text-foreground mb-1">annual benefit potential</p>
               <p className="text-sm text-muted-foreground">(probable)</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Apply margin</span>
+              <Switch
+                checked={marginEnabled}
+                onCheckedChange={onMarginToggle}
+              />
             </div>
           </div>
           <p className="text-5xl font-bold text-green-600 dark:text-green-400">
             {formatCurrency(totalValue)}
           </p>
-        </Card>
-
-        {profitValue !== undefined && profitValue > 0 && (
-          <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800">
-            <div className="flex items-start gap-3 mb-4">
-              <DollarSign className="w-8 h-8 text-orange-600 dark:text-orange-400 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-base font-semibold text-foreground mb-1">Cost of do nothing per month</p>
-                <p className="text-sm text-muted-foreground">(probable)</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Apply margin</span>
-                <Switch
-                  checked={marginEnabled}
-                  onCheckedChange={onMarginToggle}
-                />
-              </div>
-            </div>
-            <p className="text-5xl font-bold text-orange-600 dark:text-orange-400">
-              {formatCurrency(profitValue)}
-            </p>
-          </Card>
-        )}
-
-        <Card className="p-6 bg-muted/50">
-          <h4 className="text-lg font-semibold mb-4">Value category distribution</h4>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-muted-foreground">Business Growth</span>
-              <span className="text-lg font-semibold text-foreground">{formatCurrency(businessGrowthTotal)}</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-muted-foreground">Risk Avoidance</span>
-              <span className="text-lg font-semibold text-foreground">{formatCurrency(riskAvoidanceTotal)}</span>
-            </div>
-          </div>
         </Card>
       </div>
     </div>

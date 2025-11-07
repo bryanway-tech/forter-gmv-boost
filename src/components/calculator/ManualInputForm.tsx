@@ -36,6 +36,7 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
   const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [breakdownData, setBreakdownData] = useState<{
     title: string;
+    columns?: string[];
     calculations: any[];
   }>({ title: "", calculations: [] });
   const [driverToggles, setDriverToggles] = useState<{ [key: string]: boolean }>({
@@ -821,37 +822,79 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                   profitValue={metrics.profitValue}
                   marginEnabled={marginEnabled}
                   onDriverClick={(driverId) => {
+                    const forterKPIs = formData.forterKPIs || defaultForterKPIs;
+                    const amerRevenue = formData.amerAnnualGMV || 0;
+                    const emeaRevenue = formData.emeaAnnualGMV || 0;
+                    const apacRevenue = formData.apacAnnualGMV || 0;
+                    
                     if (driverId === 'gmv-uplift') {
                       setBreakdownData({
-                        title: "GMV Uplift Calculation",
+                        title: "GMV Uplift - Fraud Management & Payment Optimization",
+                        columns: ["Current", "Impact", "Forter"],
                         calculations: [
-                          { label: "Current State", isHeader: true },
-                          { label: "AMER Completed Sales", value: metrics.currentAmerCompleted, formula: "Revenue × Approval Rate × (1 - 3DS Abandonment) × (1 - Bank Decline) × (1 - Manual Abandonment)" },
-                          { label: "EMEA Completed Sales", value: metrics.currentEmeaCompleted },
-                          { label: "APAC Completed Sales", value: metrics.currentApacCompleted },
-                          { label: "", isHeader: true },
-                          { label: "With Forter", isHeader: true },
-                          { label: "AMER Completed Sales", value: metrics.futureAmerCompleted, formula: "Revenue × Improved Approval Rate × Reduced 3DS × Improved Bank Auth" },
-                          { label: "EMEA Completed Sales", value: metrics.futureEmeaCompleted },
-                          { label: "APAC Completed Sales", value: metrics.futureApacCompleted },
-                          { label: "", isHeader: true },
-                          { label: "Impact", isHeader: true },
-                          { label: "Total GMV Uplift", value: metrics.totalGMVUplift, isResult: true, impactValue: metrics.totalGMVUplift }
+                          { label: "1. Pre-Auth Fraud Decisioning", isHeader: true },
+                          { label: "Non-EEA eCommerce gross sales attempts ($)", currentValue: amerRevenue, impactValue: null, forterValue: amerRevenue },
+                          { label: "Transaction average order value ($)", currentValue: 105, impactValue: null, forterValue: 105 },
+                          { label: "Pre-Auth fraud approval rate (%)", currentValue: formData.amerFraudCheckTiming === "pre-auth" ? (formData.amerPreAuthApprovalRate || 95) : 100, impactValue: `${forterKPIs.fraudApprovalRate - (formData.amerFraudCheckTiming === "pre-auth" ? (formData.amerPreAuthApprovalRate || 95) : 100)}%pp`, forterValue: forterKPIs.fraudApprovalRate },
+                          { label: "Pre-Auth fraud approved sales ($)", currentValue: metrics.currentAmerCompleted * 1.08, impactValue: (metrics.futureAmerCompleted - metrics.currentAmerCompleted) * 1.08, forterValue: metrics.futureAmerCompleted * 1.08 },
+                          
+                          { label: "2. AMER 3DS Flow", isHeader: true },
+                          { label: "Transactions going through 3DS (%)", currentValue: formData.amer3DSChallengeRate || 0, impactValue: `-${formData.amer3DSChallengeRate || 0}%`, forterValue: 0 },
+                          { label: "Transaction 3DS failure and abandonment rate (%)", currentValue: formData.amer3DSAbandonmentRate || 10, impactValue: null, forterValue: formData.amer3DSAbandonmentRate || 10 },
+                          { label: "3DS exempt transactions (%)", currentValue: 100 - (formData.amer3DSChallengeRate || 0), impactValue: `${formData.amer3DSChallengeRate || 0}%pp`, forterValue: 100 },
+                          
+                          { label: "3. Issuing Bank", isHeader: true },
+                          { label: "Total post-3DS success sent to authorization ($)", currentValue: metrics.currentAmerCompleted * 1.08, impactValue: (metrics.futureAmerCompleted - metrics.currentAmerCompleted) * 1.08, forterValue: metrics.futureAmerCompleted * 1.08 },
+                          { label: "Declined transactions rate by issuing bank (%)", currentValue: formData.amerIssuingBankDeclineRate || 7, impactValue: "0%", forterValue: formData.amerIssuingBankDeclineRate || 7 },
+                          
+                          { label: "4. Post-Auth Fraud Decisioning", isHeader: true },
+                          { label: "Post Auth Fraud approval rate (%)", currentValue: formData.amerFraudCheckTiming === "post-auth" ? (formData.amerPostAuthApprovalRate || 98.5) : 100, impactValue: "0%", forterValue: formData.amerFraudCheckTiming === "post-auth" ? forterKPIs.fraudApprovalRate : 100 },
+                          { label: "Post-Auth fraud approved sales ($)", currentValue: metrics.currentAmerCompleted, impactValue: metrics.futureAmerCompleted - metrics.currentAmerCompleted, forterValue: metrics.futureAmerCompleted, isResult: true },
+                          
+                          { label: "Total non-EEA sales completion (in-scope) ($)", currentValue: metrics.currentAmerCompleted, impactValue: metrics.futureAmerCompleted - metrics.currentAmerCompleted, forterValue: metrics.futureAmerCompleted, isResult: true, isBad: false },
                         ]
                       });
                       setBreakdownOpen(true);
                     } else if (driverId === 'chargeback-savings') {
+                      const currentTotalRevenue = metrics.currentAmerCompleted + metrics.currentEmeaCompleted + metrics.currentApacCompleted;
+                      const futureTotalRevenue = metrics.futureAmerCompleted + metrics.futureEmeaCompleted + metrics.futureApacCompleted;
+                      const currentFraudCBRate = (formData.fraudCBRate || 0.8) / 100;
+                      const futureFraudCBRate = currentFraudCBRate * (1 - forterKPIs.chargebackReduction / 100);
+                      const avgOrderValue = formData.fraudCBAOV || 158;
+                      
+                      const currentGrossFraudCB = currentTotalRevenue * currentFraudCBRate;
+                      const futureGrossFraudCB = futureTotalRevenue * futureFraudCBRate;
+                      const currentGrossFraudCBCount = currentGrossFraudCB / avgOrderValue;
+                      const futureGrossFraudCBCount = futureGrossFraudCB / avgOrderValue;
+                      
+                      const fraudDisputeRate = 0.95;
+                      const fraudWinRate = 0.25;
+                      
+                      const currentDisputed = 0;
+                      const futureDisputed = futureGrossFraudCBCount * fraudDisputeRate;
+                      const futureWon = futureDisputed * fraudWinRate;
+                      
+                      const currentNetCB = currentGrossFraudCB;
+                      const futureNetCB = futureGrossFraudCB - (futureWon * avgOrderValue);
+                      
                       setBreakdownData({
-                        title: "Chargeback Savings Calculation",
+                        title: "Reduce fraud chargebacks",
+                        columns: ["Current", "Impact", "Forter"],
                         calculations: [
-                          { label: "Current State", isHeader: true },
-                          { label: "Current Chargebacks", value: metrics.currentChargebacks, formula: "Total Revenue × Fraud CB Rate" },
-                          { label: "", isHeader: true },
-                          { label: "With Forter", isHeader: true },
-                          { label: "Future Chargebacks", value: metrics.futureChargebacks, formula: "Current Chargebacks × (1 - CB Reduction %)" },
-                          { label: "", isHeader: true },
-                          { label: "Impact", isHeader: true },
-                          { label: "Total Savings", value: metrics.chargebackSavings, isResult: true, impactValue: metrics.chargebackSavings }
+                          { label: "Completed value of transactions ($)", currentValue: currentTotalRevenue, impactValue: null, forterValue: futureTotalRevenue },
+                          { label: "Gross fraud chargeback rate on value amount (%)", currentValue: currentFraudCBRate * 100, impactValue: `-${forterKPIs.chargebackReduction}%`, forterValue: futureFraudCBRate * 100 },
+                          { label: "Average order value of fraud chargebacks ($)", currentValue: avgOrderValue, impactValue: null, forterValue: avgOrderValue },
+                          { label: "Gross fraud chargebacks ($)", currentValue: currentGrossFraudCB, impactValue: futureGrossFraudCB - currentGrossFraudCB, forterValue: futureGrossFraudCB },
+                          { label: "Gross fraud chargebacks (#)", currentValue: currentGrossFraudCBCount, impactValue: futureGrossFraudCBCount - currentGrossFraudCBCount, forterValue: futureGrossFraudCBCount },
+                          { label: "Fraud chargeback disputed (%)", currentValue: 0, impactValue: "0%", forterValue: 95 },
+                          { label: "Fraud chargebacks disputed (#)", currentValue: currentDisputed, impactValue: futureDisputed, forterValue: futureDisputed },
+                          { label: "Fraud chargebacks disputed ($)", currentValue: 0, impactValue: futureDisputed * avgOrderValue, forterValue: futureDisputed * avgOrderValue },
+                          { label: "Fraud chargeback win rate (%)", currentValue: 0, impactValue: "0%", forterValue: 25 },
+                          { label: "Fraud chargebacks won (#)", currentValue: 0, impactValue: futureWon, forterValue: futureWon },
+                          { label: "Fraud chargebacks won ($)", currentValue: 0, impactValue: futureWon * avgOrderValue, forterValue: futureWon * avgOrderValue },
+                          { label: "Net fraud chargebacks (#)", currentValue: currentGrossFraudCBCount, impactValue: futureGrossFraudCBCount - futureWon - currentGrossFraudCBCount, forterValue: futureGrossFraudCBCount - futureWon, isResult: true },
+                          { label: "Net fraud chargebacks ($)", currentValue: currentNetCB, impactValue: currentNetCB - futureNetCB, forterValue: futureNetCB, isResult: true },
+                          { label: "Overall fraud chargeback recovery rate (%)", currentValue: 0, impactValue: "24%", forterValue: 24 },
                         ]
                       });
                       setBreakdownOpen(true);
@@ -865,6 +908,7 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                   open={breakdownOpen}
                   onOpenChange={setBreakdownOpen}
                   title={breakdownData.title}
+                  columns={breakdownData.columns}
                   calculations={breakdownData.calculations}
                 />
                 
