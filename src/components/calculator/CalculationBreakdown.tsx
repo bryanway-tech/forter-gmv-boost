@@ -39,7 +39,9 @@ export const CalculationBreakdown = ({
       const isCountValue = label?.includes("(#)");
       
       if (isPercentValue) {
-        return `${value.toFixed(2)}%`;
+        // Round to 2 decimal places max, remove trailing zeros
+        const rounded = Math.round(value * 100) / 100;
+        return `${rounded}%`;
       }
       
       if (isCountValue) {
@@ -47,7 +49,7 @@ export const CalculationBreakdown = ({
         return new Intl.NumberFormat("en-US", {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        }).format(value);
+        }).format(Math.round(value));
       }
       
       if (isDollarValue || value > 1000) {
@@ -56,10 +58,12 @@ export const CalculationBreakdown = ({
           currency: "USD",
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        }).format(value);
+        }).format(Math.round(value));
       }
       
-      return value.toFixed(2);
+      // Round to 2 significant figures for small numbers
+      const rounded = Math.round(value * 100) / 100;
+      return rounded.toString();
     }
     return value;
   };
@@ -85,24 +89,27 @@ export const CalculationBreakdown = ({
       
       if (isCountValue) {
         // Format as plain number with commas, no decimals
+        const rounded = Math.round(Math.abs(impact));
         const formatted = new Intl.NumberFormat("en-US", {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        }).format(Math.abs(impact));
+        }).format(rounded);
         return impact > 0 ? `+${formatted}` : impact < 0 ? `-${formatted}` : formatted;
       }
       
       if (isDollarValue) {
+        const rounded = Math.round(Math.abs(impact));
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        }).format(Math.abs(impact));
+        }).format(rounded);
         return impact > 0 ? `+${formatted}` : impact < 0 ? `-${formatted}` : formatted;
       }
       
-      return impact > 0 ? `+${formatValue(impact, label)}` : formatValue(impact, label);
+      const rounded = Math.round(impact * 100) / 100;
+      return rounded > 0 ? `+${rounded}` : rounded.toString();
     }
     
     // Add + for positive string numbers that don't have it
@@ -150,8 +157,8 @@ export const CalculationBreakdown = ({
                 
                 return (
                   <div key={index}>
-                    <div className={`grid grid-cols-[2fr_1fr_1fr_1fr] gap-3 items-center py-2 ${calc.isResult ? "font-bold text-base border-t-2 border-primary pt-3" : ""}`}>
-                      <div className={`${calc.isResult ? "text-primary" : ""}`}>
+                    <div className={`grid grid-cols-[2fr_1fr_1fr_1fr] gap-3 items-center py-2 ${calc.isResult ? "font-bold text-base border-t-2 border-primary pt-3 bg-primary/5" : ""}`}>
+                      <div className={`${calc.isResult ? "text-primary font-bold" : ""}`}>
                         {calc.label}
                         {calc.formula && (
                           <div className="text-xs text-muted-foreground font-mono mt-1 bg-muted/50 p-1 rounded">
