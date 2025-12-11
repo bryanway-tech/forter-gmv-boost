@@ -226,8 +226,8 @@ const Index = () => {
               <img src={customerLogoUrl} alt="Customer" className="h-10 object-contain" />
             )}
           </div>
-          <Button variant="outline" onClick={() => setMode("select")}>
-            Change Mode
+          <Button variant="outline" onClick={() => setMode(mode === "manual" ? "chatbot" : "manual")}>
+            Switch to {mode === "manual" ? "AI-Guided" : "Value Model"}
           </Button>
         </div>
 
