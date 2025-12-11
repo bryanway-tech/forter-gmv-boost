@@ -15,10 +15,11 @@ interface Message {
 
 interface ChatbotInterfaceProps {
   onComplete: (data: CalculatorData) => void;
+  onChange?: (data: CalculatorData) => void;
   initialData?: CalculatorData;
 }
 
-export const ChatbotInterface = ({ onComplete, initialData }: ChatbotInterfaceProps) => {
+export const ChatbotInterface = ({ onComplete, onChange, initialData }: ChatbotInterfaceProps) => {
   const hasInitialData = initialData && Object.keys(initialData).length > 1; // More than just forterKPIs
   
   const [messages, setMessages] = useState<Message[]>([
@@ -34,6 +35,20 @@ export const ChatbotInterface = ({ onComplete, initialData }: ChatbotInterfacePr
   const [collectedData, setCollectedData] = useState<CalculatorData>(initialData || {});
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync collectedData when initialData changes (e.g., when switching modes)
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 1) {
+      setCollectedData(initialData);
+    }
+  }, [initialData]);
+
+  // Notify parent of changes
+  useEffect(() => {
+    if (onChange) {
+      onChange(collectedData);
+    }
+  }, [collectedData, onChange]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {

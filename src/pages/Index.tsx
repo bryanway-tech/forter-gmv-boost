@@ -101,6 +101,10 @@ const Index = () => {
     }
   };
 
+  const handleDataChange = (data: CalculatorData) => {
+    setCalculatorData(data);
+  };
+
   const handleDataComplete = (data: CalculatorData) => {
     setCalculatorData(data);
     setShowResults(true);
@@ -233,9 +237,9 @@ const Index = () => {
 
         {/* Content */}
         {mode === "manual" ? (
-          <ManualInputForm onComplete={handleDataComplete} initialData={calculatorData} />
+          <ManualInputForm onComplete={handleDataComplete} onChange={handleDataChange} initialData={calculatorData} />
         ) : (
-          <ChatbotInterface onComplete={handleDataComplete} initialData={calculatorData} />
+          <ChatbotInterface onComplete={handleDataComplete} onChange={handleDataChange} initialData={calculatorData} />
         )}
       </div>
     </div>
