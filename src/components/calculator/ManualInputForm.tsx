@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,10 +15,11 @@ import { CalculationBreakdown } from "./CalculationBreakdown";
 
 interface ManualInputFormProps {
   onComplete: (data: CalculatorData) => void;
+  onChange?: (data: CalculatorData) => void;
   initialData?: CalculatorData;
 }
 
-export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProps) => {
+export const ManualInputForm = ({ onComplete, onChange, initialData }: ManualInputFormProps) => {
   const [formData, setFormData] = useState<CalculatorData>(
     initialData || {
       amerGrossMarginPercent: 50,
@@ -29,6 +30,20 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
       forterKPIs: defaultForterKPIs,
     }
   );
+
+  // Sync formData when initialData changes (e.g., when switching modes)
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 1) {
+      setFormData(initialData);
+    }
+  }, [initialData]);
+
+  // Notify parent of changes
+  useEffect(() => {
+    if (onChange) {
+      onChange(formData);
+    }
+  }, [formData, onChange]);
 
   const [selectedChallenges, setSelectedChallenges] = useState<{ [key: string]: boolean }>({});
   const [selectedSolutions, setSelectedSolutions] = useState<{ [key: string]: boolean }>({});
