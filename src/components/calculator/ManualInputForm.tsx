@@ -1000,11 +1000,6 @@ export const ManualInputForm = ({ onComplete, initialData }: ManualInputFormProp
                   calculations={breakdownData.calculations}
                 />
                 
-                <div className="flex justify-center gap-4 mt-6">
-                  <Button onClick={handleSubmit} size="lg">
-                    View Full Results Dashboard
-                  </Button>
-                </div>
               </>
             )}
           </TabsContent>
